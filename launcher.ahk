@@ -321,7 +321,7 @@ ParseCommandLine() {
                     Verbose('Remove "' script '"')
                 }
             } 
-        
+           
         case '-vars':
             Message(Vars.ToString())           
         case '-scripts':
@@ -333,7 +333,7 @@ ParseCommandLine() {
             Scripts.Clean('scripts')
             
         case '-verbose':
-            IsVerbose := true   
+            IsVerbose := true
             
         default:
             if !pair.Has(2) {
@@ -343,31 +343,36 @@ ParseCommandLine() {
             
             value := GetValue()
             
-            if ((value = '' || value = 'unset')) {  
+            if ((value = '' || value = 'unset')) {
                 if !Vars.Has(arg) {
                     Warning('Value for ' arg ' is empty', 'Value')
                     continue("ParseArgs")
-                }    
+                }
                 
                 Vars[arg] := 'unset'
                 Verbose('Remove ' arg '=' Vars[arg])
                 continue("ParseArgs")
             }
             
+            
             Vars[arg] := ExpandVariables(value)
-            Verbose('Assign ' arg '=' Vars[arg])  
+            Verbose('Assign ' arg '=' Vars[arg])
         }
     }
-    
-    Vars.Write('variables')
-    Scripts.Write('scripts')
 }
+
+;── Main ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+ReadVariables()
+ReadScripts()
 
 if (A_Args.length) {
     ParseCommandLine()
+    Vars.Write('variables')
+    Scripts.Write('scripts')
     ExitApp()
 } else {
-    m := CreateMenu()
+    mainMenu := CreateMenu()
     ShowAgain()
     
     $^+s::ShowAgain()
