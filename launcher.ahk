@@ -283,6 +283,11 @@ ParseCommandLine() {
             switch arg, false {
             case '--add':
                 for script, state in _scripts {
+                    if !Scripts.Has(script) {
+                        Warning('Cannot remove non-saved script: "' script '"', 'Script')
+                        continue("ParseArgs")
+                    }
+                    
                     Scripts.Set(script, true)
                     Verbose('Add "' script '"')
                 }
