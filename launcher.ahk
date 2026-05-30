@@ -232,7 +232,20 @@ ParseScripts(scriptsList, separator := ';', state := true) {
     return _scripts
 }
 
+ParseFile(path, separator := ';', state := true) {
+    if !FileExist(path) {
+        Warning(path, 'File not found')
+        return Map()
+    } 
+    
+    Verbose('Get scripts from "' path '"')
+    lines := StrReplace(FileRead(path), '`n', separator)
+    return ParseScripts(lines, separator, state)
+}
+
 ParseCommandLine() {
+    global IsVerbose
+
     ParseArgs:
     while A_Args.length {
         NextArg() {
@@ -253,6 +266,17 @@ ParseCommandLine() {
             ExitApp(2)
         }
         
+        GetScripts(state := true) {
+            path := ExpandVariables(GetValue())
+
+            if (SubStr(path, 1, 1) = '@') {
+                path := SubStr(path, 2)  ; omit @
+                return ParseFile(path, Vars['scriptsSep'], state)
+            } else {
+                return ParseScripts(path, Vars['scriptsSep'], state)
+            }
+        }
+        
         switch arg, false {  ; case-insensitive comparison    
         case '-autorun':
             RunScripts(Scripts)    
@@ -264,7 +288,7 @@ ParseCommandLine() {
             Verbose('Set separator: ' GetValue())
             
         case '--run', '--close':
-            _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])
+            _scripts := GetScripts()
             if !_scripts.count
                 continue("ParseArgs")
             
@@ -274,30 +298,30 @@ ParseCommandLine() {
             case '--close':
                 CloseScripts(_scripts)
             }   
-            
+                    
         case '--add', '--remove':        
-            _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])         
+            _scripts := GetScripts()            
             if !_scripts.count
                 continue("ParseArgs")
 
             switch arg, false {
             case '--add':
                 for script, state in _scripts {
+                    Scripts.Set(script, true)
+                    Verbose('Add "' script '"')
+                }
+            case '--remove':
+                for script, state in _scripts {
                     if !Scripts.Has(script) {
                         Warning('Cannot remove non-saved script: "' script '"', 'Script')
                         continue("ParseArgs")
                     }
                     
-                    Scripts.Set(script, true)
-                    Verbose('Add "' script '"')
-                }
-                
-            case '--remove':
-                for script, state in _scripts {                    
                     Scripts.Set(script, 'unset')
                     Verbose('Remove "' script '"')
                 }
-            }                
+            } 
+                       
         default:
             Warning('Parameter error: Unknown parameter "' arg '"')            
         }
