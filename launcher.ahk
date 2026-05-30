@@ -207,17 +207,27 @@ ParseScripts(scriptsList) {
     if !scriptsList
         return _scripts
     
+    ParseArgScripts:
     for script in StrSplit(scriptsList, ';') {
         script := ExpandVariables(script)
         
         if FileExist(script) {
             Verbose('Found "' script '"')
             _scripts.Set(script, true)
-            continue
+            continue("ParseArgScripts")
+        }
+        
+        SearchScript:
+        for path in Scripts {
+            if InStr(GetShortName(path, 1), script) {
+                Verbose('"' script '" found in storage: "' path '"')
+                _scripts.Set(path, true)
+                continue("ParseArgScripts")
+            }
         }
         
         Warning(script, 'Script not found')
-    } 
+    }
     
     return _scripts
 }
