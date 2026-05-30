@@ -1,87 +1,95 @@
 #Requires Autohotkey v2
 #Warn
+#ErrorStdOut
+#Warn All, StdOut
 #SingleInstance ignore
+;@Ahk2Exe-ConsoleApp
 
-Persistent
+Persistent()
 KeyHistory(0)
 ListLines(false)
 SetWorkingDir(A_ScriptDir)
-TraySetIcon('C:\Users\ToYu\Pictures\icons\Fluent\png\recentmenu.png')
 
-scripts := Map(
-    A_ScriptDir '\hotif.ahk',    true,
-    A_ScriptDir '\taphold.ahk',  true,
-    A_ScriptDir '\arrows.ahk',   true,
-    A_ScriptDir '\chars.ahk',    true,
-    A_ScriptDir '\mouse.ahk',    true,
-    'C:\Configs and settings\AutoHotKey\Radify\Radify Menus.ahk', true,
-    'C:\Configs and settings\AutoHotKey\LanguageIndicator\language-indicator.ahk', true,
-    'C:\Configs and settings\AutoHotKey\QuickSwitch\QuickSwitch.ahk', false, 
-)
+INI := 'launcher.ini'
+IsVerbose := false
+
+Scripts := Map()
+Vars := Map('scriptsSep', ';')
+
+;── Menu ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 ShowAgain(*) {  
     static X, Y
     static pos := MouseGetPos(&X, &Y)
     
-    global m
-    m.Show(X, Y)
+    mainMenu.Show(X, Y)
 }
 
-CreateMenu(_scripts := Scripts) {
-    _m := Menu()
-    _m.Add('Run',   RunScripts.Bind(_scripts))
-    _m.Add('Close', CloseScripts.Bind(_scripts))
-    _m.Add('Exit',  (*) => ExitApp())
-    _m.Add()
+CreateMenu(scriptsMap := Scripts) {
+    _menu := Menu()
+    _menu.Add('Run',   RunScripts.Bind(scriptsMap))
+    _menu.Add('Close', CloseScripts.Bind(scriptsMap))
+    _menu.Add('Exit',  (*) => ExitApp())
+    _menu.Add()
     
-    for script, state in _scripts {
+    for script, state in scriptsMap {
         name := GetShortName(script)
         
-        _m.Add(name, Toggle.Bind(script))
+        _menu.Add(name, Select.Bind(script))
         if state 
-            _m.Check(name) 
+            _menu.Check(name) 
     }
     
-    return _m
+    return _menu
 }
 
-GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
-
-Toggle(script, item, pos, m) {
+Select(script, item, pos, mainMenu) {
     if GetKeyState('LShift') {
         CloseScripts(Map(script, true))
     } else if GetKeyState('LCtrl') {
         RunScripts(Map(script, true))
     } else {
         Scripts[script] ^= 1
-        m.ToggleCheck(item)
+        mainMenu.ToggleCheck(item)
     }
     
     ShowAgain()
 }
 
-RunScripts(_scripts, *) {
+;── Core ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
+
+RunScripts(scriptsMap, fromMenu?, *) {
     errors := ''
-    for script, state in _scripts {
-        if state
+    for script, state in scriptsMap {
+        if state {
             Run(script,, 'hide')
+            Verbose('Run "' script '"')
+        }
     }
     
-    ExitApp()
+    if IsSet(fromMenu)
+        SetTimer(() => ExitApp(), -20000)
 }
 
-CloseScripts(_scripts, *) {
+CloseScripts(scriptsMap, fromMenu?, *) {
     errors := ''
-    for script, state in _scripts {
+    for script, state in scriptsMap {
         if state && RunWait('taskkill /fi "WINDOWTITLE eq ' script '*',, 'hide')
             errors .= script . A_Space
+        else
+            Verbose('Close "' script '"')
     }
     
     if errors
-        MsgBox('Failed to close:`n' errors, A_ScriptName ' error', 'Iconx')
+        Err(errors, 'Close scripts')
         
-    ExitApp()
+    if IsSet(fromMenu)
+        SetTimer(() => ExitApp(), -20000)    
 }
+
+;── Command line ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
 MsgWarn(msg, *) {
     MsgBox(msg, A_ScriptName, 'Icon!')
