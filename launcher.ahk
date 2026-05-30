@@ -341,8 +341,16 @@ ParseCommandLine() {
                 continue("ParseArgs")
             }
             
-            Vars[arg] := ExpandVariables(GetValue())
-            Verbose('Assign ' arg '=' Vars[arg])        
+            value := GetValue()
+            
+            if ((value = '' || value = 'unset')) {                
+                Vars[arg] := 'unset'
+                Verbose('Remove ' arg '=' Vars[arg])
+                continue("ParseArgs")
+            }
+            
+            Vars[arg] := ExpandVariables(value)
+            Verbose('Assign ' arg '=' Vars[arg])  
         }
     }
     
