@@ -254,22 +254,22 @@ ParseCommandLine() {
         }
         
         switch arg, false {  ; case-insensitive comparison    
-        case 'autorun':
+        case '-autorun':
             RunScripts(Scripts)    
-        case 'autoclose':
+        case '-autoclose':
             CloseScripts(Scripts)
-        case 'sep':
+        case '--sep':
             Vars['scriptsSep'] := GetValue() 
             Verbose('Set separator: ' GetValue())    
-        case 'run', 'close':
+        case '--run', '--close':
             _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])
             if !_scripts.count
                 continue
             
             switch arg, false {
-            case 'run':
+            case '--run':
                 RunScripts(_scripts)
-            case 'close':
+            case '--close':
                 CloseScripts(_scripts)
             }   
             
