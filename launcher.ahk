@@ -321,7 +321,15 @@ ParseCommandLine() {
                     Verbose('Remove "' script '"')
                 }
             } 
-                       
+        
+        case '-scripts':
+            Message(Scripts.ToString())
+        case '-scripts-clear':
+            Scripts.Clean('scripts')
+            
+        case '-verbose':
+            IsVerbose := true   
+            
         default:
             Warning('Parameter error: Unknown parameter "' arg '"')            
         }
