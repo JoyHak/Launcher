@@ -150,6 +150,56 @@ MapClean(pairsMap, section := 'variables') {
 Map.prototype.DefineProp('Clean', {call: MapClean})
 Map.prototype.DefineProp('Write', {call: MapWrite})
 
+
+;── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Message(msg) {
+    try {
+        FileAppend(msg '`n', '*')
+    } catch {
+        MsgBox(msg, A_ScriptName)
+    }
+}
+
+Verbose(msg) {
+    if IsVerbose
+        try FileAppend(msg '`n', '*')
+}
+
+Warning(msg, what := A_ScriptName) {
+    try {
+        FileAppend(what ' warning - ' msg '`n', '**')
+    } catch {
+        MsgBox(msg, what ' warning', 'Icon!')
+    }
+}
+
+Err(msg, what := A_ScriptName) {
+    try {
+        FileAppend(what ' error - ' msg '`n', '**')
+    } catch {
+        MsgBox(msg, what ' error', 'Iconx')
+    }
+}
+
+OnError(Exception)
+Exception(ex, *) {
+    Err(ex.message '`n' ex.extra, ex.what)
+    ExitApp(12)
+}
+
+
+MapToString(m) {
+    str := ''
+    for k, v in m {
+        str .= '`n' k ' = ' v 
+    }
+    
+    return LTrim(str, '`n')
+}
+
+Map.prototype.DefineProp('ToString', {call: MapToString})
+
 ;── Command line ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
 MsgWarn(msg, *) {
