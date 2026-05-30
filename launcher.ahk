@@ -48,8 +48,15 @@ CreateMenu(_scripts := Scripts) {
 GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
 
 Toggle(script, item, pos, m) {
-    scripts[script] ^= 1
-    m.ToggleCheck(item)
+    if GetKeyState('LShift') {
+        CloseScripts(Map(script, true))
+    } else if GetKeyState('LCtrl') {
+        RunScripts(Map(script, true))
+    } else {
+        Scripts[script] ^= 1
+        m.ToggleCheck(item)
+    }
+    
     ShowAgain()
 }
 
