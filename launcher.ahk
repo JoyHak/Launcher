@@ -202,18 +202,18 @@ Map.prototype.DefineProp('ToString', {call: MapToString})
 
 ;── Command line ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-ParseScripts(scriptsList) {
+ParseScripts(scriptsList, separator := ';', state := true) {
     _scripts := Map()
-    if !scriptsList
+    if !(scriptsList && separator)
         return _scripts
     
     ParseArgScripts:
-    for script in StrSplit(scriptsList, ';') {
+    for script in StrSplit(scriptsList, separator) {
         script := ExpandVariables(script)
         
         if FileExist(script) {
             Verbose('Found "' script '"')
-            _scripts.Set(script, true)
+            _scripts.Set(script, state)
             continue("ParseArgScripts")
         }
         
@@ -221,13 +221,13 @@ ParseScripts(scriptsList) {
         for path in Scripts {
             if InStr(GetShortName(path, 1), script) {
                 Verbose('"' script '" found in storage: "' path '"')
-                _scripts.Set(path, true)
+                _scripts.Set(path, state)
                 continue("ParseArgScripts")
             }
         }
         
         Warning(script, 'Script not found')
-    }
+    } 
     
     return _scripts
 }
@@ -251,7 +251,11 @@ ParseCommandLine() {
         case 'autoclose':
             CloseScripts(Scripts)
         case 'run', 'close':
-            _scripts := ParseScripts(pair[2])
+            if !pair.Has(2) {
+                Err('Missing value for "' arg '"', 'Parameter')
+                continue
+            }
+            _scripts := ParseScripts(pair[2], Vars['scriptsSep'])
             if !_scripts.count
                 continue
             
