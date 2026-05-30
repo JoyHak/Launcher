@@ -19,13 +19,6 @@ scripts := Map(
     'C:\Configs and settings\AutoHotKey\QuickSwitch\QuickSwitch.ahk', false, 
 )
 
-
-m := CreateMenu()
-ShowAgain()
-$^+s::ShowAgain()
-$^+d::ExitApp
-
-
 ShowAgain(*) {  
     static X, Y
     static pos := MouseGetPos(&X, &Y)
@@ -34,21 +27,22 @@ ShowAgain(*) {
     m.Show(X, Y)
 }
 
-CreateMenu() {
-    local m := Menu()
-    m.Add('Run',   RunScripts)
-    m.Add('Close', CloseScripts)
-    m.Add()
+CreateMenu(_scripts := Scripts) {
+    _m := Menu()
+    _m.Add('Run',   RunScripts.Bind(_scripts))
+    _m.Add('Close', CloseScripts.Bind(_scripts))
+    _m.Add('Exit',  (*) => ExitApp())
+    _m.Add()
     
-    for script, state in scripts {
+    for script, state in _scripts {
         name := GetShortName(script)
         
-        m.Add(name, Toggle.Bind(script))
+        _m.Add(name, Toggle.Bind(script))
         if state 
-            m.Check(name) 
+            _m.Check(name) 
     }
     
-    return m
+    return _m
 }
 
 GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
@@ -59,25 +53,25 @@ Toggle(script, item, pos, m) {
     ShowAgain()
 }
 
-RunScripts(*) {
+RunScripts(_scripts, *) {
     errors := ''
-    for script, state in scripts {
+    for script, state in _scripts {
         if state
             Run(script,, 'hide')
     }
     
-    ExitApp
+    ExitApp()
 }
 
-CloseScripts(*) {
+CloseScripts(_scripts, *) {
     errors := ''
-    for script, state in scripts {
-        if state && RunWait('taskkill /fi "WINDOWTITLE eq ' script '.ahk*',, 'hide')
+    for script, state in _scripts {
+        if state && RunWait('taskkill /fi "WINDOWTITLE eq ' script '*',, 'hide')
             errors .= script . A_Space
     }
     
     if errors
         MsgBox('Failed to close:`n' errors, A_ScriptName ' error', 'Iconx')
         
-    ExitApp
+    ExitApp()
 }
