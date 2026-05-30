@@ -274,11 +274,32 @@ ParseCommandLine() {
             case '--close':
                 CloseScripts(_scripts)
             }   
-                       
+            
+        case '--add', '--remove':        
+            _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])         
+            if !_scripts.count
+                continue("ParseArgs")
+
+            switch arg, false {
+            case '--add':
+                for script, state in _scripts {
+                    Scripts.Set(script, true)
+                    Verbose('Add "' script '"')
+                }
+                
+            case '--remove':
+                for script, state in _scripts {                    
+                    Scripts.Set(script, 'unset')
+                    Verbose('Remove "' script '"')
+                }
+            }                
         default:
             Warning('Parameter error: Unknown parameter "' arg '"')            
         }
     }
+    
+    Vars.Write('variables')
+    Scripts.Write('scripts')
 }
 
 if (A_Args.length) {
