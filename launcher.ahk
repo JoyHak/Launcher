@@ -202,10 +202,23 @@ Map.prototype.DefineProp('ToString', {call: MapToString})
 
 ;── Command line ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-MsgWarn(msg, *) {
-    MsgBox(msg, A_ScriptName, 'Icon!')
+ParseScripts(scriptsList) {
+    _scripts := Map()
+    
+    for script in StrSplit(scriptsList, ';') {
+        script := ExpandVariables(script)
+        
+        if FileExist(script) {
+            Verbose('Found "' script '"')
+            _scripts.Set(script, true)
+            continue
+        }
+        
+        Warning(script, 'Script not found')
+    } 
+    
+    return _scripts
 }
-
 
 ParseCommandLine() {
     ParseArgs:
@@ -226,29 +239,9 @@ ParseCommandLine() {
         case 'autoclose':
             CloseScripts(Scripts)
         case 'run', 'close':
-            _scripts := Map()
-            if pair.Has(2) {
-                ParseArgScripts:
-                for script in StrSplit(pair[2], ';') {
-                    if FileExist(script) {
-                        _scripts.Set(script, true)
-                        continue("ParseArgScripts")
-                    }
-                    
-                    SearchScript:
-                    for path in Scripts {
-                        if InStr(path, script) {
-                            _scripts.Set(path, true)
-                            continue("ParseArgScripts")
-                        }
-                    }
-                    
-                    MsgWarn('Value error: Script "' script '" not found')
-                }   
-            }
-            
+            _scripts := ParseScripts(pair[2])
             if !_scripts.count {
-                MsgWarn('Parameter error: Missing scripts for "' arg '"')
+                Warning('Parameter error: Missing scripts for "' arg '"')
                 continue
             }
             
@@ -260,7 +253,7 @@ ParseCommandLine() {
             }   
             
         default:
-            MsgWarn('Parameter error: Unknown parameter "' arg '"')            
+            Warning('Parameter error: Unknown parameter "' arg '"')            
         }
     }
 }
