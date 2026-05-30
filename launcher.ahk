@@ -87,6 +87,7 @@ MsgWarn(msg, *) {
     MsgBox(msg, A_ScriptName, 'Icon!')
 }
 
+
 ParseCommandLine() {
     ParseArgs:
     while A_Args.length {
@@ -105,6 +106,40 @@ ParseCommandLine() {
             RunScripts(Scripts)    
         case 'autoclose':
             CloseScripts(Scripts)
+        case 'run', 'close':
+            _scripts := Map()
+            if pair.Has(2) {
+                ParseArgScripts:
+                for script in StrSplit(pair[2], ';') {
+                    if FileExist(script) {
+                        _scripts.Set(script, true)
+                        continue("ParseArgScripts")
+                    }
+                    
+                    SearchScript:
+                    for path in Scripts {
+                        if InStr(path, script) {
+                            _scripts.Set(path, true)
+                            continue("ParseArgScripts")
+                        }
+                    }
+                    
+                    MsgWarn('Value error: Script "' script '" not found')
+                }   
+            }
+            
+            if !_scripts.count {
+                MsgWarn('Parameter error: Missing scripts for "' arg '"')
+                continue
+            }
+            
+            switch arg, false {
+            case 'run':
+                RunScripts(_scripts)
+            case 'close':
+                CloseScripts(_scripts)
+            }   
+            
         default:
             MsgWarn('Parameter error: Unknown parameter "' arg '"')            
         }
