@@ -343,7 +343,12 @@ ParseCommandLine() {
             
             value := GetValue()
             
-            if ((value = '' || value = 'unset')) {                
+            if ((value = '' || value = 'unset')) {  
+                if !Vars.Has(arg) {
+                    Warning('Value for ' arg ' is empty', 'Value')
+                    continue("ParseArgs")
+                }    
+                
                 Vars[arg] := 'unset'
                 Verbose('Remove ' arg '=' Vars[arg])
                 continue("ParseArgs")
