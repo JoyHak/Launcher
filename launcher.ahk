@@ -322,8 +322,13 @@ ParseCommandLine() {
                 }
             } 
         
+        case '-vars':
+            Message(Vars.ToString())           
         case '-scripts':
             Message(Scripts.ToString())
+            
+        case '-vars-clear':
+            Vars.Clean('variables')
         case '-scripts-clear':
             Scripts.Clean('scripts')
             
@@ -331,7 +336,13 @@ ParseCommandLine() {
             IsVerbose := true   
             
         default:
-            Warning('Parameter error: Unknown parameter "' arg '"')            
+            if !pair.Has(2) {
+                Err('Unknown parameter "' arg '"', 'Parameter') 
+                continue("ParseArgs")
+            }
+            
+            Vars[arg] := ExpandVariables(GetValue())
+            Verbose('Assign ' arg '=' Vars[arg])        
         }
     }
     
