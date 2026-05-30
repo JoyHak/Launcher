@@ -258,13 +258,15 @@ ParseCommandLine() {
             RunScripts(Scripts)    
         case '-autoclose':
             CloseScripts(Scripts)
+            
         case '--sep':
             Vars['scriptsSep'] := GetValue() 
-            Verbose('Set separator: ' GetValue())    
+            Verbose('Set separator: ' GetValue())
+            
         case '--run', '--close':
             _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])
             if !_scripts.count
-                continue
+                continue("ParseArgs")
             
             switch arg, false {
             case '--run':
@@ -272,7 +274,7 @@ ParseCommandLine() {
             case '--close':
                 CloseScripts(_scripts)
             }   
-            
+                       
         default:
             Warning('Parameter error: Unknown parameter "' arg '"')            
         }
