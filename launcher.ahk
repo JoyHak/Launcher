@@ -242,20 +242,27 @@ ParseCommandLine() {
             return StrSplit(A_Args.RemoveAt(1), '=')
         }
             
-        pair := NextArg()
-        arg  := Trim(pair[1], "/-`t`"`' ")
+        pair  := NextArg()
+        arg   := pair[1]
+        
+        GetValue() {
+            if pair.Has(2)
+                return Trim(pair[2], '"`'`t ')
+                
+            Err('Missing value for "' arg '"', 'Parameter')
+            ExitApp(2)
+        }
         
         switch arg, false {  ; case-insensitive comparison    
         case 'autorun':
             RunScripts(Scripts)    
         case 'autoclose':
             CloseScripts(Scripts)
+        case 'sep':
+            Vars['scriptsSep'] := GetValue() 
+            Verbose('Set separator: ' GetValue())    
         case 'run', 'close':
-            if !pair.Has(2) {
-                Err('Missing value for "' arg '"', 'Parameter')
-                continue
-            }
-            _scripts := ParseScripts(pair[2], Vars['scriptsSep'])
+            _scripts := ParseScripts(GetValue(), Vars['scriptsSep'])
             if !_scripts.count
                 continue
             
