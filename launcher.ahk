@@ -82,3 +82,42 @@ CloseScripts(_scripts, *) {
         
     ExitApp()
 }
+
+MsgWarn(msg, *) {
+    MsgBox(msg, A_ScriptName, 'Icon!')
+}
+
+ParseCommandLine() {
+    ParseArgs:
+    while A_Args.length {
+        NextArg() {
+            if !A_Args.Length
+                ExitApp()
+
+            return StrSplit(A_Args.RemoveAt(1), '=')
+        }
+            
+        pair := NextArg()
+        arg  := Trim(pair[1], "/-`t`"`' ")
+        
+        switch arg, false {  ; case-insensitive comparison    
+        case 'autorun':
+            RunScripts(Scripts)    
+        case 'autoclose':
+            CloseScripts(Scripts)
+        default:
+            MsgWarn('Parameter error: Unknown parameter "' arg '"')            
+        }
+    }
+}
+
+if (A_Args.length) {
+    ParseCommandLine()
+    ExitApp()
+} else {
+    m := CreateMenu()
+    ShowAgain()
+    
+    $^+s::ShowAgain()
+    $^+d::ExitApp
+}
