@@ -204,6 +204,8 @@ Map.prototype.DefineProp('ToString', {call: MapToString})
 
 ParseScripts(scriptsList) {
     _scripts := Map()
+    if !scriptsList
+        return _scripts
     
     for script in StrSplit(scriptsList, ';') {
         script := ExpandVariables(script)
@@ -240,10 +242,8 @@ ParseCommandLine() {
             CloseScripts(Scripts)
         case 'run', 'close':
             _scripts := ParseScripts(pair[2])
-            if !_scripts.count {
-                Warning('Parameter error: Missing scripts for "' arg '"')
+            if !_scripts.count
                 continue
-            }
             
             switch arg, false {
             case 'run':
