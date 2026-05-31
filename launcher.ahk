@@ -243,7 +243,7 @@ Map.prototype.DefineProp('Write', {call: MapWrite})
 
 ;── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-Message(text) {
+Message(text, icon := '') {
     static colorTagsPattern := 's)<(\w+)>(.*?)</\1>'
     
     static colorMap := Map(
@@ -292,7 +292,7 @@ Message(text) {
         DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
     } catch {
         text := RegExReplace(text, colorTagsPattern, '$2')
-        MsgBox(text, A_ScriptName)
+        MsgBox(text, A_ScriptName, icon)
     }
 }
 
@@ -302,19 +302,11 @@ Verbose(msg) {
 }
 
 Warning(msg, what := A_ScriptName) {
-    try {
-        FileAppend(what ' warning - ' msg '`n', '**')
-    } catch {
-        MsgBox(msg, what ' warning', 'Icon!')
-    }
+    Message(Format('<yellow>{} warning - {}</yellow>', what, msg), 'Icon!')
 }
 
 Err(msg, what := A_ScriptName) {
-    try {
-        FileAppend(what ' error - ' msg '`n', '**')
-    } catch {
-        MsgBox(msg, what ' error', 'Iconx')
-    }
+    Message(Format('<red>{} error - {}</red>', what, msg), 'Iconx')
 }
 
 OnError(Exception)
