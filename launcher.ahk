@@ -214,7 +214,7 @@ ParseScripts(scriptsList, separator := ';', state := true) {
         if FileExist(script) {
             Verbose('Found "' script '"')
             _scripts.Set(script, state)
-            continue("ParseArgScripts")
+            continue ParseArgScripts
         }
         
         SearchScript:
@@ -222,7 +222,7 @@ ParseScripts(scriptsList, separator := ';', state := true) {
             if InStr(GetShortName(path, 1), script) {
                 Verbose('"' script '" found in storage: "' path '"')
                 _scripts.Set(path, state)
-                continue("ParseArgScripts")
+                continue ParseArgScripts
             }
         }
         
@@ -247,16 +247,9 @@ ParseCommandLine() {
     global IsVerbose
 
     ParseArgs:
-    while A_Args.length {
-        NextArg() {
-            if !A_Args.Length
-                ExitApp()
-
-            return StrSplit(A_Args.RemoveAt(1), '=')
-        }
-            
-        pair  := NextArg()
-        arg   := pair[1]
+    for args in A_Args {
+        pair := StrSplit(args, '=')
+        arg  := pair[1]
         
         GetValue() {
             if pair.Has(2)
@@ -290,7 +283,7 @@ ParseCommandLine() {
         case '--run', '--close':
             _scripts := GetScripts()
             if !_scripts.count
-                continue("ParseArgs")
+                continue ParseArgs
             
             switch arg, false {
             case '--run':
@@ -302,7 +295,7 @@ ParseCommandLine() {
         case '--add', '--remove':        
             _scripts := GetScripts()            
             if !_scripts.count
-                continue("ParseArgs")
+                continue ParseArgs
 
             switch arg, false {
             case '--add':
@@ -314,7 +307,7 @@ ParseCommandLine() {
                 for script, state in _scripts {
                     if !Scripts.Has(script) {
                         Warning('Cannot remove non-saved script: "' script '"', 'Script')
-                        continue("ParseArgs")
+                        continue ParseArgs
                     }
                     
                     Scripts.Set(script, 'unset')
@@ -338,7 +331,7 @@ ParseCommandLine() {
         default:
             if !pair.Has(2) {
                 Err('Unknown parameter "' arg '"', 'Parameter') 
-                continue("ParseArgs")
+                continue ParseArgs
             }
             
             value := GetValue()
@@ -346,12 +339,12 @@ ParseCommandLine() {
             if ((value = '' || value = 'unset')) {
                 if !Vars.Has(arg) {
                     Warning('Value for ' arg ' is empty', 'Value')
-                    continue("ParseArgs")
+                    continue ParseArgs
                 }
                 
                 Vars[arg] := 'unset'
                 Verbose('Remove ' arg '=' Vars[arg])
-                continue("ParseArgs")
+                continue ParseArgs
             }
             
             
