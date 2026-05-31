@@ -451,13 +451,16 @@ ParseCommandLine() {
             }
             
         default:
+            ; Try to assign variable=value
             if !pair.Has(2) {
+                ; No value, not a variable
                 Err('Unknown parameter "' arg '"', 'Parameter') 
                 continue ParseArgs
             }
             
             value := GetValue()
             
+            ; Check for removing variable
             if ((value = '' || value = 'unset')) {
                 if !Vars.Has(arg) {
                     Warning('Value for ' arg ' is empty', 'Value')
@@ -468,7 +471,6 @@ ParseCommandLine() {
                 Verbose('Remove ' arg '=' Vars[arg])
                 continue ParseArgs
             }
-            
             
             Vars[arg] := ExpandVariables(value)
             Verbose('Assign ' arg '=' Vars[arg])
