@@ -4,7 +4,6 @@
 #Warn All, StdOut
 #SingleInstance ignore
 
-;@Ahk2Exe-ConsoleApp
 ;@Ahk2Exe-SetMainIcon clock.ico
 ;@Ahk2Exe-SetCopyright Rafaello
 ;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
@@ -265,6 +264,20 @@ GetOutputHandle() {
     return DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE)     
 }
 
+FreeOutput(*) {
+    hConsole := DllCall('GetConsoleWindow')
+    ControlSend('{Enter}', , 'ahk_id ' hConsole)
+    
+    DllCall('FreeConsole')
+}
+
+AttachOutput() {
+    DllCall('FreeConsole')
+    DllCall('AttachConsole', 'int', -1)
+    
+    OnExit(FreeOutput)
+}
+
 Output(text, color := 'white') {
     static colors := Map(
         'black',    0,
@@ -282,8 +295,20 @@ Output(text, color := 'white') {
     
     Print(msg, _color := normalColor) {
         static hConsole := GetOutputHandle()
-        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', _color)
-        FileAppend(msg, 'CONOUT$')
+        DllCall(
+            'SetConsoleTextAttribute', 
+            'ptr', hConsole, 
+            'uint', _color
+        )
+        
+        DllCall(
+            'WriteConsoleW',
+			'UPtr', hConsole,
+			'Str',  msg,
+			'UInt', StrLen(msg),
+			'UInt*', 0,
+			'uint',  0
+        )
     }
 
     pos := 1
@@ -400,7 +425,7 @@ ParseFile(path, separator := ';', state := true) {
 }
 
 ParseCommandLine() {
-    global IsVerbose
+    AttachOutput()
 
     ParseArgs:
     for args in A_Args {
@@ -443,7 +468,7 @@ ParseCommandLine() {
             Scripts.Clean('scripts')
             
         case '-verbose':
-            IsVerbose := true
+            global IsVerbose := true
         case '-h', '-?':
             ShowHelpMessage()    
         case '--sep':
