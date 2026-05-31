@@ -10,8 +10,8 @@ class ScriptManager {
     __New() {
         ui := Gui(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
-        ui.OnEvent('Close',  (*) => ExitApp())
-        ui.OnEvent('Escape', (*) => ExitApp())
+        ui.OnEvent('Close',  WriteAndExit)
+        ui.OnEvent('Escape', WriteAndExit)
         
         ui.AddText('xm',        'Defined variables:')
         this.vars := ui.AddListView('xm w800 Grid -Multi r4',  ['Name', 'Value'])
@@ -23,8 +23,8 @@ class ScriptManager {
         ui.AddText('x+m ys',    'Value:')
         this.vars.content := ui.AddEdit('x+m ys-4 w200')
 
-        ui.Button('xm y+10',    'Add',         this.AddVariable.Bind(this))
-        ui.Button(,             'Remove',      this.RemoveVariable.Bind(this))
+        ui.Button('xm y+10',    'Add',      this.AddVariable.Bind(this))
+        ui.Button(,             'Remove',   this.RemoveVariable.Bind(this))
         
         ui.AddText('xm y+30',   'Saved scripts:')
         this.scripts := ui.AddListView('xm w800 Grid -Multi r10',  ['Path', 'State'])
@@ -60,13 +60,15 @@ class ScriptManager {
         this.vars.Delete()
         
         for name, value in Vars {
-            if (name = 'scriptsSep')
+            if (name = 'scriptsSep' || value = 'unset')
                 continue
                 
             this.vars.Add('', name, value)
         }
         
         this.vars.ModifyCol()  ; Auto-size each column
+        this.vars.edit.value := ''
+        this.vars.content.value := ''
     }
 
     RefreshScripts(*) {
@@ -76,13 +78,14 @@ class ScriptManager {
             switch state, false {
             case  true:     displayState := 'enabled'
             case  false:    displayState := 'disabled'
-            case 'unset':   displayState := 'removed'
+            case 'unset':   continue
             }
             
             this.scripts.Add('', script, displayState)
         }
 
         this.scripts.ModifyCol()  ; Auto-size each column
+        this.scripts.edit.value := ''
         this.status.text := 'Loaded ' Scripts.Count ' scripts'
     }
     
@@ -92,9 +95,9 @@ class ScriptManager {
     }
 
     GetSelected(listView) {
-        row := listView.GetNext(0, 'Focused')
+        row := listView.GetNext()
         if !row
-            row := listView.GetNext(0, 'Selected')
+            row := listView.GetNext(, 'Focused')
         
         if !row {
             this.status.text := 'Nothing selected'
@@ -114,7 +117,10 @@ class ScriptManager {
         return value
     }
     
-    LoadValue(listView, row) {        
+    LoadValue(listView, row) {  
+        if (row = 0)
+            return
+            
         try listView.edit.value  := listView.GetText(row, 1)
         try listView.content.value := listView.GetText(row, 1)
     }
@@ -134,7 +140,7 @@ class ScriptManager {
     }
         
     RemoveVariable(*) {
-        if !(name := this.GetSelected(this.scripts))
+        if !(name := this.GetSelected(this.vars))
             return
             
         if !Vars.Has(name) {
@@ -160,7 +166,7 @@ class ScriptManager {
     }
     
     AddVariable(*) {        
-        if !(name := this.GetSelected(this.vars))
+        if !(name := this.GetValue(this.vars))
             return
         
         value := Trim(this.vars.content.value, ' `t`r`n`"`'')

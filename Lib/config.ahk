@@ -44,3 +44,8 @@ WriteAll(*) {
     Vars.Write('variables')
     Scripts.Write('scripts')
 }
+
+WriteAndExit(*) {
+    WriteAll()
+    ExitApp()
+}

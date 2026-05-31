@@ -9,7 +9,7 @@ GetShortName(path, offset := 2) {
     return path
 }
 
-RunScripts(scriptsMap, fromMenu?, *) {
+RunScripts(scriptsMap, *) {
     if !scriptsMap.count
         return
 
@@ -20,12 +20,9 @@ RunScripts(scriptsMap, fromMenu?, *) {
             Verbose('Run "' script '"')
         }
     }
-    
-    if IsSet(fromMenu)
-        SetTimer(() => ExitApp(), -20000)
 }
 
-CloseScripts(scriptsMap, fromMenu?, *) {
+CloseScripts(scriptsMap, *) {
     if !scriptsMap.count
         return
 
@@ -39,7 +36,4 @@ CloseScripts(scriptsMap, fromMenu?, *) {
     
     if errors
         Err(errors, 'Close scripts')
-        
-    if IsSet(fromMenu)
-        SetTimer(() => ExitApp(), -20000)    
 }
