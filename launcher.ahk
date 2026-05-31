@@ -296,6 +296,7 @@ Message(text, icon := '') {
         
         ; Reset color
         DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
+        FileAppend('`n', 'CONOUT$')
     } catch {
         text := RegExReplace(text, colorTagsPattern, '$2')
         MsgBox(text, A_ScriptName, icon)
