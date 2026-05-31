@@ -1,4 +1,13 @@
-GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
+GetShortName(path, offset := 2) {
+    if (
+        pos := InStr(path, '\',, -1, -offset)
+     || pos := InStr(path, '/',, -1, -offset)
+    ) {
+        return '.' SubStr(path, pos)
+    }
+    
+    return path
+}
 
 RunScripts(scriptsMap, fromMenu?, *) {
     if !scriptsMap.count
