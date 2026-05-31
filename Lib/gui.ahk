@@ -1,13 +1,14 @@
 Gui.Prototype.DefineProp(
     'Button', { Call: (
         (ui, options := '', text := 'Button', callback := (*) => 0) => ui
-        .AddButton('x+m w100 h30 ' options, text)
+        .AddButton('x+m w70 h30 ' options, text)
         .OnEvent('Click', callback)
     )}
 )
 
 class ScriptManager {
     __New() {
+        ; todo: disable, clear
         ui := Gui(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
         ui.OnEvent('Close',  WriteAndExit)
@@ -30,7 +31,7 @@ class ScriptManager {
         this.scripts := ui.AddListView('xm w800 Grid -Multi r10',  ['Path', 'State'])
         this.scripts.OnEvent('Click',       this.LoadValue.Bind(this))
         this.scripts.OnEvent('DoubleClick', this.RunScript.Bind(this))
-
+        
         ui.AddText('xm y+10',   'Script or file path:')
         this.scripts.edit := ui.AddEdit('xm w620')
         
