@@ -16,82 +16,81 @@ IsVerbose := false
 Scripts := Map()
 Vars := Map('scriptsSep', ';')
 
-
 ShowHelpMessage() {
     Message
-    (
-    "Launches pre-defined apps and scripts.
-     Copyright (c) 2026 Rafaello
+    (`
+    "<gray>Launches pre-defined apps and scripts.
+    Copyright (c) 2026 Rafaello</gray>
 
-     Usage: 
-       launcher --param=script1[;script2;script3...]
-       launcher --param=@file
+     Usage:
+       launcher --param=script1<gray>[;script2;script3...]</gray>
+       launcher --param=<yellow>@file</yellow>
        launcher -switch
-       launcher variable=value
-       
-     Parameters:  
-       --run     run script(s)
-       --close   close script(s)   
-       --add     add script(s)   
-       --remove  remove script(s)   
-       --sep     set separator between scripts
-       --help    show this help message
-       
-     Switches:  
-       -autorun         run all script
-       -autoclose       close all script
-       -vars            show saved variables
-       -scripts         show saved scripts
-       -vars-clear      clear saved variables
-       -scripts-clear   clear saved scripts
-       -verbose         show additional messages
-       -h, -?           show this help message
-             
-     Pass one or more scripts, separated by ;
-       launcher --run=quickswitch;radify     
-     
+       launcher <blue>variable</blue>=value
+
+     Parameters:
+       <cyan>--run</cyan>     run script(s)
+       <cyan>--close</cyan>   close script(s)
+       <cyan>--add</cyan>     add script(s)
+       <cyan>--remove</cyan>  remove script(s)
+       <cyan>--sep</cyan>     set separator between scripts
+       <gray>--help</gray>    show this help message
+
+     Switches:
+       <cyan>-autorun</cyan>         run all script
+       <cyan>-autoclose</cyan>       close all script
+       <cyan>-vars</cyan>            show saved variables
+       <cyan>-scripts</cyan>         show saved scripts
+       <cyan>-vars-clear</cyan>      clear saved variables
+       <cyan>-scripts-clear</cyan>   clear saved scripts
+       <cyan>-verbose</cyan>         show additional messages
+       <gray>-h, -?</gray>           show this help message
+
+     Pass one or more scripts, separated by <green>;</green>
+       launcher --run=quickswitch<green>;</green>radify
+
      Separator can be changed:
-       launcher --sep=^ --run=quickswitch^radify     
-       launcher --run=arrows^chars  separator is saved 
-     
+       launcher <cyan>--sep</cyan>=<green>^</green> --run=quickswitch<green>^</green>radify
+       launcher --run=arrows<green>^</green>chars  separator is saved
+
      You can specify full path or filename only:
-       launcher --run=quickswitch 
-       launcher --run=C:\Ahk\quickswitch 
-     
-     Multiple scripts can be read from @file:
-       launcher --add=@list.ini 
-       launcher --remove=@list.ini 
-     
-       @file can be quoted full path:
-         launcher --run=@'C:\Temp files\My scripts'
-         launcher --run='@C:\Temp files\My scripts'
-         
+       launcher --run=quickswitch
+       launcher --run=C:\Ahk\quickswitch
+
+     Multiple scripts can be read from <yellow>@file</yellow>:
+       launcher --add=<yellow>@list.ini</yellow>
+       launcher --remove=<yellow>@list.ini</yellow>
+
+       <yellow>@file</yellow> can be quoted full path:
+         launcher --run=<yellow>@'C:\Temp files\My scripts'</yellow>
+         launcher --run=<yellow>'@C:\Temp files\My scripts'</yellow>
+
          or path with variables:
-         launcher list=C:\listfile.ini --add=@%list%
-         
-       @file may contain scripts, variables and 
-       strings, separated by --sep:
-         C:\s1.ahk;C:\s2.ahk
-         C:\%A_Temp%\s3.ahk
-         C:\%myvar%\s4.ahk
-         
+         launcher list=C:\listfile.ini --add=@<blue>%list%</blue>
+
+       <yellow>@file</yellow> may contain scripts, variables and
+       strings, separated by <cyan>--sep</cyan>:
+         C:\s1.ahk<green>;</green>C:\s2.ahk
+         C:\<blue>%A_Temp%</blue>\s3.ahk
+         C:\<blue>%myvar%</blue>\s4.ahk
+
        It can be passed to any parameter.
-         
-     Parameters|switches order affects events order:
-       launcher -autoclose --run=quickswitch    close all scripts, then launch quickswitch
-       launcher --run=quickswitch -autoclose    launch quickswitch, then close all scripts
-       launcher --add=@list.ini -autorun        save multiple scripts and run them
-       
+
+     <cyan>Parameters|switches</cyan> order affects events sequence:
+       launcher <green>-autoclose</green> --run=quickswitch    close all scripts, then launch quickswitch
+       launcher --run=quickswitch <green>-autoclose</green>    launch quickswitch, then close all scripts
+       launcher --add=<yellow>@list.ini</yellow> <green>-autoclose</green>        save multiple scripts and run them
+
      Assigned variable will be saved:
-       launcher mainDir=%A_ScriptDir%\DarkGui
-       launcher --run=%mainDir%\DarkTheme.ahk
-    
+       launcher mainDir=<blue>%A_ScriptDir%</blue>\DarkGui
+       launcher --run=<blue>%mainDir%</blue>\DarkTheme.ahk
+
      Variables and separator can be assigned on the fly:
-       launcher AhkDir=C:\Ahk --run=%AhkDir%\quickswitch AhkDir=C:\Scripts --run=%AhkDir%\radify
-       
-     You can remove variable by assigning empty value or 'unset':
+       launcher <cyan>AhkDir=C:\Ahk</cyan> --run=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir=C:\Scripts</cyan> --run=<blue>%AhkDir%</blue>\radify
+
+     You can remove variable by assigning empty value or <magenta>'unset'</magenta>:
        launcher AhkDir=
-       launcher AhkDir=unset"
+       launcher AhkDir=<magenta>unset</magenta>"
     )
 }
 
@@ -232,17 +231,62 @@ Map.prototype.DefineProp('Write', {call: MapWrite})
 
 ;── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-Message(msg) {
+Message(text) {
+    static colorTagsPattern := 's)<(\w+)>(.*?)</\1>'
+    
+    static colorMap := Map(
+        'black',    0,
+        'blue',     1,
+        'green',    2,
+        'cyan',     3,
+        'red',      4,
+        'magenta',  5,
+        'yellow',   6,
+        'white',    7,
+        'gray',     8,
+    )
+
+    normalColor := colorMap['white']
+    
     try {
-        FileAppend(msg '`n', '*')
+        static hConsole := DllCall('GetStdHandle', 'int', -11)
+        pos := 1
+        
+        while (pos <= StrLen(text)) {
+            if (RegExMatch(text, colorTagsPattern, &match, pos)) {
+                ; Print normal text before the match
+                normalText := SubStr(text, pos, match.Pos - pos)
+                if (normalText) {
+                    DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
+                    FileAppend(normalText, 'CONOUT$')
+                }
+                
+                ; Print colored text
+                color := colorMap.Has(match[1]) ? colorMap[match[1]] : normalColor
+                DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', color)
+                FileAppend(match[2], 'CONOUT$')
+                
+                ; Move position forward
+                pos := match.Pos + match.Len
+            } else {
+                ; Print remaining text
+                DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
+                FileAppend(SubStr(text, pos), 'CONOUT$')
+                break
+            }
+        }
+        
+        ; Reset color
+        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
     } catch {
-        MsgBox(msg, A_ScriptName)
+        text := RegExReplace(text, colorTagsPattern, '$2')
+        MsgBox(text, A_ScriptName)
     }
 }
 
 Verbose(msg) {
     if IsVerbose
-        try FileAppend(msg '`n', '*')
+        Message(Format('<gray>{}</gray>', msg))
 }
 
 Warning(msg, what := A_ScriptName) {
