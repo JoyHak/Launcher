@@ -36,7 +36,6 @@ ShowHelpMessage() {
       <cyan>--add</cyan>     add script(s)
       <cyan>--remove</cyan>  remove script(s)
       <cyan>--sep</cyan>     set separator between scripts
-      <gray>--help</gray>    show this help message
 
     Switches:
       <cyan>-autorun</cyan>         run all script
@@ -438,7 +437,7 @@ ParseCommandLine() {
             
         case '-verbose':
             IsVerbose := true
-        case '--help', '-h', '-?':
+        case '-h', '-?':
             ShowHelpMessage()    
         case '--sep':
             Vars['scriptsSep'] := GetValue() 
