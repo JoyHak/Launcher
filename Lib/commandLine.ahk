@@ -5,6 +5,9 @@ ParseScripts(scriptsList, separator := ';', state := true) {
     
     ParseArgScripts:
     for script in StrSplit(scriptsList, separator) {
+        if !script
+            continue
+            
         script := ExpandVariables(script)
         
         if FileExist(script) {
