@@ -20,89 +20,91 @@ ShowHelpMessage() {
     Message
     (`
     "<gray>Launches pre-defined apps and scripts.
-    Copyright (c) 2026 Rafaello</gray>
+    Copyright (c) 2026 Rafaello
+    https://github.com/JoyHak
+    </gray>
 
-     Usage:
-       launcher --param=script1<gray>[;script2;script3...]</gray>
-       launcher --param=<yellow>@file</yellow>
-       launcher -switch
-       launcher <cyan>variable</cyan>=value
+    Usage:
+      launcher --param=script1<gray>[;script2;script3...]</gray>
+      launcher --param=<yellow>@file</yellow>
+      launcher -switch
+      launcher <cyan>variable</cyan>=value
 
-     Parameters:
-       <cyan>--run</cyan>     run script(s)
-       <cyan>--close</cyan>   close script(s)
-       <cyan>--add</cyan>     add script(s)
-       <cyan>--remove</cyan>  remove script(s)
-       <cyan>--sep</cyan>     set separator between scripts
-       <gray>--help</gray>    show this help message
+    Parameters:
+      <cyan>--run</cyan>     run script(s)
+      <cyan>--close</cyan>   close script(s)
+      <cyan>--add</cyan>     add script(s)
+      <cyan>--remove</cyan>  remove script(s)
+      <cyan>--sep</cyan>     set separator between scripts
+      <gray>--help</gray>    show this help message
 
-     Switches:
-       <cyan>-autorun</cyan>         run all script
-       <cyan>-autoclose</cyan>       close all script
-       <cyan>-vars</cyan>            show saved variables
-       <cyan>-scripts</cyan>         show saved scripts
-       <cyan>-vars-clear</cyan>      clear saved variables
-       <cyan>-scripts-clear</cyan>   clear saved scripts
-       <cyan>-verbose</cyan>         show additional messages
-       <gray>-h, -?</gray>           show this help message
+    Switches:
+      <cyan>-autorun</cyan>         run all script
+      <cyan>-autoclose</cyan>       close all script
+      <cyan>-vars</cyan>            show saved variables
+      <cyan>-scripts</cyan>         show saved scripts
+      <cyan>-vars-clear</cyan>      clear saved variables
+      <cyan>-scripts-clear</cyan>   clear saved scripts
+      <cyan>-verbose</cyan>         show additional messages
+      <gray>-h, -?</gray>           show this help message
 
-     Pass one or more scripts, separated by <green>;</green>
-       launcher --run=quickswitch<green>;</green>radify
+    Pass one or more scripts, separated by <green>;</green>
+      launcher --run=quickswitch<green>;</green>radify
 
-     Separator can be changed:
-       launcher <cyan>--sep</cyan>=<green>^</green> --run=quickswitch<green>^</green>radify
-       launcher --run=arrows<green>^</green>chars  separator is saved
+    Separator can be changed:
+      launcher <cyan>--sep</cyan>=<green>^</green> --run=quickswitch<green>^</green>radify
+      launcher --run=arrows<green>^</green>chars  separator is saved
 
-     You can specify full path or filename only:
-       launcher --run=quickswitch
-       launcher --run=C:\Ahk\quickswitch
+    You can specify full path or filename only:
+      launcher --run=quickswitch
+      launcher --run=C:\Ahk\quickswitch
 
-     Multiple scripts can be read from <yellow>@file</yellow>:
-       launcher --add=<yellow>@list.ini</yellow>
-       launcher --remove=<yellow>@list.ini</yellow>
+    Multiple scripts can be read from <yellow>@file</yellow>:
+      launcher --add=<yellow>@list.ini</yellow>
+      launcher --remove=<yellow>@list.ini</yellow>
 
-       <yellow>@file</yellow> can be quoted full path:
-         launcher --run=<yellow>@'C:\Temp files\My scripts'</yellow>
-         launcher --run=<yellow>'@C:\Temp files\My scripts'</yellow>
+      <yellow>@file</yellow> can be quoted full path:
+        launcher --run=<yellow>@'C:\Temp files\My scripts'</yellow>
+        launcher --run=<yellow>'@C:\Temp files\My scripts'</yellow>
 
-         or path with variables:
-         launcher list=C:\listfile.ini --add=@<blue>%list%</blue>
+        or path with variables:
+        launcher list=C:\listfile.ini --add=@<blue>%list%</blue>
 
-       <yellow>@file</yellow> may contain scripts, variables and
-       strings, separated by <cyan>--sep</cyan>:
-         C:\s1.ahk<green>;</green>C:\s2.ahk
-         C:\<blue>%A_Temp%</blue>\s3.ahk
-         C:\<blue>%myvar%</blue>\s4.ahk
+      <yellow>@file</yellow> may contain scripts, variables and
+      strings, separated by <cyan>--sep</cyan>:
+        C:\s1.ahk<green>;</green>C:\s2.ahk
+        C:\<blue>%A_Temp%</blue>\s3.ahk
+        C:\<blue>%myvar%</blue>\s4.ahk
 
-       It can be passed to any parameter.
+      It can be passed to any parameter.
 
-     <cyan>Parameters|switches</cyan> order affects events sequence:
-       launcher <cyan>-autoclose</cyan> <green>--run</green>=quickswitch    close all scripts, then launch quickswitch
-       launcher <green>--run</green>=quickswitch <cyan>-autoclose</cyan>    launch quickswitch, then close all scripts
-       launcher <green>--add</green>=<yellow>@list.ini</yellow> <cyan>-autoclose</cyan>      save multiple scripts and run them
+    <cyan>Parameters|switches</cyan> order affects events sequence:
+      launcher <cyan>-autoclose</cyan> <green>--run</green>=quickswitch    close all scripts, then launch quickswitch
+      launcher <green>--run</green>=quickswitch <cyan>-autoclose</cyan>    launch quickswitch, then close all scripts
+      launcher <green>--add</green>=<yellow>@list.ini</yellow> <cyan>-autoclose</cyan>      save multiple scripts and run them
 
-     Assigned <cyan>variable</cyan> will be saved:
-       launcher <cyan>mainDir</cyan>=C:\Scripts\DarkGui
-       launcher --run=<blue>%mainDir%</blue>\DarkTheme.ahk
+    Assigned <cyan>variable</cyan> will be saved:
+      launcher <cyan>mainDir</cyan>=C:\Scripts\DarkGui
+      launcher --run=<blue>%mainDir%</blue>\DarkTheme.ahk
     
-       New value can contain variable too:
-       launcher <cyan>mainDir</cyan>=<blue>%A_ScriptDir%</blue>\DarkGui
+      New value can contain variable too:
+      launcher <cyan>mainDir</cyan>=<blue>%A_ScriptDir%</blue>\DarkGui
     
-       Value can be changed on the fly:
-         launcher <cyan>AhkDir</cyan>=C:\Ahk <green>--run</green>=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir</cyan>=C:\Scripts <green>--run</green>=<blue>%AhkDir%</blue>\radify
+      Value can be changed on the fly:
+        launcher <cyan>AhkDir</cyan>=C:\Ahk <green>--run</green>=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir</cyan>=C:\Scripts <green>--run</green>=<blue>%AhkDir%</blue>\radify
+      
+      Variable can be removed:
+        launcher <cyan>AhkDir</cyan>=
+        launcher <cyan>AhkDir</cyan>=<magenta>unset</magenta>
        
-       Variable can be removed:
-         launcher <cyan>AhkDir</cyan>=
-         launcher <cyan>AhkDir</cyan>=<magenta>unset</magenta>
+      You can use AutoHotkey built-in/saved/environment variables anywhere:
+        launcher --run=<blue>%A_ScriptFullPath%</blue> --run=<blue>%A_ScriptDir%</blue>\quickswitch.ahk
+        launcher --close=<blue>%TEMP%</blue>\junk.ahk --run=<blue>%A_Temp%</blue>\junk.ahk
+        launcher --add=<blue>%ConEmuDir%</blue>\update.py
         
-       You can use AutoHotkey built-in/saved/environment variables anywhere:
-         launcher --run=<blue>%A_ScriptFullPath%</blue> --run=<blue>%A_ScriptDir%</blue>\quickswitch.ahk
-         launcher --close=<blue>%TEMP%</blue>\junk.ahk --run=<blue>%A_Temp%</blue>\junk.ahk
-         launcher --add=<blue>%ConEmuDir%</blue>\update.py
-         
-       ...and include them to <yellow>@file</yellow>:
-         C:\<blue>%A_Temp%</blue>\script.ahk     line from <yellow>@list.ini</yellow>
-         launcher --add=<yellow>@list.ini</yellow>   will add 'C:\<blue>%A_Temp%</blue>\script.ahk'"
+      ...and include them to <yellow>@file</yellow>:
+        C:\<blue>%A_Temp%</blue>\script.ahk     line from <yellow>@list.ini</yellow>
+        launcher --add=<yellow>@list.ini</yellow>   will add 'C:\<blue>%A_Temp%</blue>\script.ahk'"
     )
 }
 
