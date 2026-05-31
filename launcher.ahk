@@ -16,6 +16,85 @@ IsVerbose := false
 Scripts := Map()
 Vars := Map('scriptsSep', ';')
 
+
+ShowHelpMessage() {
+    Message
+    (
+    "Launches pre-defined apps and scripts.
+     Copyright (c) 2026 Rafaello
+
+     Usage: 
+       launcher --param=script1[;script2;script3...]
+       launcher --param=@file
+       launcher -switch
+       launcher variable=value
+       
+     Parameters:  
+       --run     run script(s)
+       --close   close script(s)   
+       --add     add script(s)   
+       --remove  remove script(s)   
+       --sep     set separator between scripts
+       --help    show this help message
+       
+     Switches:  
+       -autorun         run all script
+       -autoclose       close all script
+       -vars            show saved variables
+       -scripts         show saved scripts
+       -vars-clear      clear saved variables
+       -scripts-clear   clear saved scripts
+       -verbose         show additional messages
+       -h, -?           show this help message
+             
+     Pass one or more scripts, separated by ;
+       launcher --run=quickswitch;radify     
+     
+     Separator can be changed:
+       launcher --sep=^ --run=quickswitch^radify     
+       launcher --run=arrows^chars  separator is saved 
+     
+     You can specify full path or filename only:
+       launcher --run=quickswitch 
+       launcher --run=C:\Ahk\quickswitch 
+     
+     Multiple scripts can be read from @file:
+       launcher --add=@list.ini 
+       launcher --remove=@list.ini 
+     
+       @file can be quoted full path:
+         launcher --run=@'C:\Temp files\My scripts'
+         launcher --run='@C:\Temp files\My scripts'
+         
+         or path with variables:
+         launcher list=C:\listfile.ini --add=@%list%
+         
+       @file may contain scripts, variables and 
+       strings, separated by --sep:
+         C:\s1.ahk;C:\s2.ahk
+         C:\%A_Temp%\s3.ahk
+         C:\%myvar%\s4.ahk
+         
+       It can be passed to any parameter.
+         
+     Parameters|switches order affects events order:
+       launcher -autoclose --run=quickswitch    close all scripts, then launch quickswitch
+       launcher --run=quickswitch -autoclose    launch quickswitch, then close all scripts
+       launcher --add=@list.ini -autorun        save multiple scripts and run them
+       
+     Assigned variable will be saved:
+       launcher mainDir=%A_ScriptDir%\DarkGui
+       launcher --run=%mainDir%\DarkTheme.ahk
+    
+     Variables and separator can be assigned on the fly:
+       launcher AhkDir=C:\Ahk --run=%AhkDir%\quickswitch AhkDir=C:\Scripts --run=%AhkDir%\radify
+       
+     You can remove variable by assigning empty value or 'unset':
+       launcher AhkDir=
+       launcher AhkDir=unset"
+    )
+}
+
 ;── Menu ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 ShowAgain(*) {  
@@ -327,6 +406,8 @@ ParseCommandLine() {
             
         case '-verbose':
             IsVerbose := true
+        case '--help', '-h', '-?':
+            ShowHelpMessage()
             
         default:
             if !pair.Has(2) {
