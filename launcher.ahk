@@ -1,8 +1,5 @@
 #Requires Autohotkey v2
 #Warn
-#ErrorStdOut
-#Warn All, StdOut
-#SingleInstance ignore
 
 ;@Ahk2Exe-SetMainIcon clock.ico
 ;@Ahk2Exe-SetCopyright Rafaello
@@ -147,9 +144,8 @@ if (A_Args.length) {
     Scripts.Write('scripts')
     ExitApp()
 } else {
-    mainMenu := CreateMenu()
-    ShowAgain()
+    ShowMainGui()
     
-    $^+s::ShowAgain()
-    $^+d::ExitApp
+    Hotkey('$^+s', (*) => ShowMainGui())
+    Hotkey('$^+d', (*) => ExitApp())
 }
