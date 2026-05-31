@@ -151,6 +151,9 @@ Select(script, item, pos, mainMenu) {
 GetShortName(path, offset := 2) => '.' SubStr(path, InStr(path, '\',, -1, -offset))
 
 RunScripts(scriptsMap, fromMenu?, *) {
+    if !scriptsMap.count
+        return
+
     errors := ''
     for script, state in scriptsMap {
         if state {
@@ -164,6 +167,9 @@ RunScripts(scriptsMap, fromMenu?, *) {
 }
 
 CloseScripts(scriptsMap, fromMenu?, *) {
+    if !scriptsMap.count
+        return
+
     errors := ''
     for script, state in scriptsMap {
         if state && RunWait('taskkill /fi "WINDOWTITLE eq ' script '*',, 'hide')
