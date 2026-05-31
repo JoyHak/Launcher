@@ -117,6 +117,10 @@ ParseCommandLine() {
             
         default:
             ; Try to assign variable=value
+            if arg = 'scriptsSep' {
+                continue ParseArgs 
+            }
+                
             if !pair.Has(2) {
                 ; No value, not a variable
                 Err('Unknown parameter "' arg '"', 'Parameter') 

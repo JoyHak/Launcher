@@ -1,37 +1,217 @@
-ShowAgain(*) {  
-    static X, Y
-    static pos := MouseGetPos(&X, &Y)
-    
-    mainMenu.Show(X, Y)
-}
+Gui.Prototype.DefineProp(
+    'Button', { Call: (
+        (ui, options := '', text := 'Button', callback := (*) => 0) => ui
+        .AddButton('x+m w100 h30 ' options, text)
+        .OnEvent('Click', callback)
+    )}
+)
 
-CreateMenu(scriptsMap := Scripts) {
-    _menu := Menu()
-    _menu.Add('Run',   RunScripts.Bind(scriptsMap))
-    _menu.Add('Close', CloseScripts.Bind(scriptsMap))
-    _menu.Add('Exit',  (*) => ExitApp())
-    _menu.Add()
-    
-    for script, state in scriptsMap {
-        name := GetShortName(script)
+class ScriptManager {
+    __New() {
+        ui := Gui(, 'Script manager')
+        ui.SetFont('q5 s11', 'Maple Mono NF CN')
+        ui.OnEvent('Close',  (*) => ExitApp())
+        ui.OnEvent('Escape', (*) => ExitApp())
         
-        _menu.Add(name, Select.Bind(script))
-        if state 
-            _menu.Check(name) 
-    }
-    
-    return _menu
-}
+        ui.AddText('xm',        'Defined variables:')
+        this.vars := ui.AddListView('xm w800 Grid -Multi r4',  ['Name', 'Value'])
+        this.vars.OnEvent('Click',          this.LoadValue.Bind(this))
 
-Select(script, item, pos, mainMenu) {
-    if GetKeyState('LShift') {
-        CloseScripts(Map(script, true))
-    } else if GetKeyState('LCtrl') {
-        RunScripts(Map(script, true))
-    } else {
-        Scripts[script] ^= 1
-        mainMenu.ToggleCheck(item)
+        ui.AddText('xm y+10 Section', 'Name:')
+        this.vars.edit := ui.AddEdit('x+m ys-4 w100')
+
+        ui.AddText('x+m ys',    'Value:')
+        this.vars.content := ui.AddEdit('x+m ys-4 w200')
+
+        ui.Button('xm y+10',    'Add',         this.AddVariable.Bind(this))
+        ui.Button(,             'Remove',      this.RemoveVariable.Bind(this))
+        
+        ui.AddText('xm y+30',   'Saved scripts:')
+        this.scripts := ui.AddListView('xm w800 Grid -Multi r10',  ['Path', 'State'])
+        this.scripts.OnEvent('Click',       this.LoadValue.Bind(this))
+        this.scripts.OnEvent('DoubleClick', this.RunScript.Bind(this))
+
+        ui.AddText('xm y+10',   'Script or file path:')
+        this.scripts.edit := ui.AddEdit('xm w620')
+        
+        ui.Button(,             'Browse',   this.BrowsePath.Bind(this))
+
+        ui.AddText('xm y+10',   'Separator:')
+        this.sep := ui.AddEdit('x+m yp-4 w30 Limit1', Vars['scriptsSep'])
+        ui.Button('yp-2 w40',   'Set',      this.SetSeparator.Bind(this))
+        
+        ui.Button('xm y+10',    'Add',      this.AddScript.Bind(this))
+        ui.Button(,             'Load',     this.LoadScript.Bind(this))
+
+        ui.Button(,             'Remove',   this.RemoveScript.Bind(this))
+        ui.Button(,             'Run',      this.RunScript.Bind(this))
+        ui.Button(,             'Close',    this.CloseScript.Bind(this))
+                                            
+        ui.Button(,             'Refresh',  this.Refresh.Bind(this))
+        ui.Button(,             'Save',     WriteAll)
+        
+        this.status := ui.AddText('xm y+10 w760')
+        
+        this.Refresh()
+        ui.Show()
+    }
+
+    RefreshVars(*) {
+        this.vars.Delete()
+        
+        for name, value in Vars {
+            if (name = 'scriptsSep')
+                continue
+                
+            this.vars.Add('', name, value)
+        }
+        
+        this.vars.ModifyCol()  ; Auto-size each column
+    }
+
+    RefreshScripts(*) {
+        this.scripts.Delete()
+
+        for script, state in Scripts {
+            switch state, false {
+            case  true:     displayState := 'enabled'
+            case  false:    displayState := 'disabled'
+            case 'unset':   displayState := 'removed'
+            }
+            
+            this.scripts.Add('', script, displayState)
+        }
+
+        this.scripts.ModifyCol()  ; Auto-size each column
+        this.status.text := 'Loaded ' Scripts.Count ' scripts'
     }
     
-    ShowAgain()
+    Refresh(*) {
+        this.RefreshVars()
+        this.RefreshScripts()
+    }
+
+    GetSelected(listView) {
+        row := listView.GetNext(0, 'Focused')
+        if !row
+            row := listView.GetNext(0, 'Selected')
+        
+        if !row {
+            this.status.text := 'Nothing selected'
+            return ''
+        }
+        
+        return listView.GetText(row, 1)
+    }
+    
+    GetValue(listView) {
+        value := Trim(listView.edit.value, ' `t`r`n`"`'')
+        if !value {
+            this.status.text := 'Value is empty'
+            return ''
+        } 
+        
+        return value
+    }
+    
+    LoadValue(listView, row) {        
+        try listView.edit.value  := listView.GetText(row, 1)
+        try listView.content.value := listView.GetText(row, 1)
+    }
+
+    RunScript(*) {
+        if !(script := this.GetSelected(this.scripts))
+            return
+        
+        RunScripts(Map(script, true))
+    }
+
+    CloseScript(*) {
+        if !(script := this.GetSelected(this.scripts))
+            return
+        
+        CloseScripts(Map(script, true))
+    }
+        
+    RemoveVariable(*) {
+        if !(name := this.GetSelected(this.scripts))
+            return
+            
+        if !Vars.Has(name) {
+            this.status.text := 'Cannot remove non-existing variable'
+            return
+        }
+
+        Vars.Set(name, 'unset')
+        this.RefreshVars()
+    }
+
+    RemoveScript(*) {
+        if !(script := this.GetSelected(this.scripts))
+            return
+
+        if !Scripts.Has(script) {
+            this.status.text := 'Cannot remove non-existing script'
+            return
+        }
+
+        Scripts.Set(script, 'unset')
+        this.RefreshScripts()
+    }
+    
+    AddVariable(*) {        
+        if !(name := this.GetSelected(this.vars))
+            return
+        
+        value := Trim(this.vars.content.value, ' `t`r`n`"`'')
+        if (value = '' || value = 'unset') {
+            if Vars.Has(name)
+                Vars[name] := 'unset'
+            else
+                this.status.text := 'Cannot init variable with empty value'
+        } else {
+            Vars[name] := ExpandVariables(value)
+        }
+        
+        this.RefreshVars()
+    }
+
+    AddScript(*) {
+        if !(path := this.GetValue(this.scripts))
+            return
+
+        for script, state in ParseScripts(path, Vars['scriptsSep'])
+            Scripts.Set(script, true)
+
+        this.RefreshScripts()
+    }
+
+    LoadScript(*) {
+        if !(path := this.GetValue(this.scripts))
+            return
+
+        for script, state in ParseFile(path, Vars['scriptsSep'])
+            Scripts.Set(script, true)
+
+        this.RefreshScripts()
+    }
+
+    BrowsePath(*) {
+        f := FileSelect(1, , 'Select script or text file')
+        if !f {
+            this.status.text := 'No file is selected'
+            return
+        }
+        
+        this.scripts.edit.value := f
+    }
+
+    SetSeparator(*) {
+        if !this.sep.value {
+            this.status.text := 'Separator cannot be empty'
+            return
+        }
+        
+        Vars['scriptsSep'] := this.sep.value
+    }
 }
