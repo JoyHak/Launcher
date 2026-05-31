@@ -1,4 +1,4 @@
-ParseScripts(scriptsList, separator := ';', state := true) {
+ParseScripts(scriptsList, separator := ';', state := 'enabled') {
     _scripts := Map()
     if !(scriptsList && separator)
         return _scripts
@@ -31,7 +31,7 @@ ParseScripts(scriptsList, separator := ';', state := true) {
     return _scripts
 }
 
-ParseFile(path, separator := ';', state := true) {
+ParseFile(path, separator := ';', state := 'enabled') {
     if !FileExist(path) {
         Warning(path, 'File not found')
         return Map()
@@ -58,7 +58,7 @@ ParseCommandLine() {
             ExitApp(2)
         }
         
-        GetScripts(state := true) {
+        GetScripts(state := 'enabled') {
             path := ExpandVariables(GetValue())
 
             if (SubStr(path, 1, 1) = '@') {
@@ -74,11 +74,42 @@ ParseCommandLine() {
             RunScripts(Scripts)    
         case '-autoclose':
             CloseScripts(Scripts)
-                   
         case '-vars':
-            Message(Vars.ToString())           
+            grid := Vars.ToGrid(['Name', 'Value'])
+            Colorize(&grid, 'm)^\s+Name| Value\s*$', 'gray')
+            Message(grid)
+            
         case '-scripts':
-            Message(Scripts.ToString())
+            _scripts := Map()
+            running  := GetRunningScripts()
+            
+            for script, state in Scripts {
+                state := running.Get(script, state)
+                
+                switch state, false {
+                case 'disabled':
+                    icon  := 'x'
+                case 'enabled':
+                    icon  := 'o'
+                case 'running':
+                    icon := '>'
+                case 'unset':
+                    continue
+                }
+                
+                _scripts.Set(icon ' ' script, state)
+            }
+            
+            grid := _scripts.ToGrid(['  Path', 'State'])
+            
+            ; Color tags will break grid alignment, 
+            ; so they are added after all calculations
+            Colorize(&grid, 'm)^x\s+| disabled\s*$', 'red')
+            Colorize(&grid, 'm)^o\s+| enabled\s*$',  'cyan')
+            Colorize(&grid, 'm)^>\s+| running\s*$',  'green')
+            Colorize(&grid, 'm)^\s+Path| State\s*$', 'gray')
+            
+            Message(grid)
             
         case '-vars-clear':
             Vars.Clean('variables')
@@ -98,10 +129,16 @@ ParseCommandLine() {
         case '--close':
             CloseScripts(GetScripts())
             
-        case '--add':
+        case '--add', '--enable':
             for script, state in GetScripts() {
-                Scripts.Set(script, true)
+                Scripts.Set(script, 'enabled')
                 Verbose('Add "' script '"')
+            }
+            
+        case '--disable':
+            for script, state in GetScripts() {
+                Scripts.Set(script, 'disabled')
+                Verbose('Disable"' script '"')
             }
             
         case '--remove':
