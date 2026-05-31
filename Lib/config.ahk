@@ -20,23 +20,23 @@ ExpandVariables(path) {
     return path
 }
 
-ReadVariables() {
+ReadVariables(&varsMap) {
     if !FileExist(INI)
         return
 
     loop parse IniRead(INI, 'variables'), '`n' {
         data := StrSplit(A_LoopField, '=')
-        Vars.Set(data[1], data[2])
+        varsMap.Set(data[1], data[2])
     }
 }
 
-ReadScripts() {
+ReadScripts(&scriptsMap) {
     if !FileExist(INI)
         return
 
     loop parse IniRead(INI, 'scripts'), '`n' {
         data := StrSplit(A_LoopField, '=')
-        Scripts.Set(ExpandVariables(data[1]), data[2])
+        scriptsMap.Set(ExpandVariables(data[1]), data[2])
     }
 }
 
