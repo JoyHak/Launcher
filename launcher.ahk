@@ -409,46 +409,7 @@ ParseCommandLine() {
             RunScripts(Scripts)    
         case '-autoclose':
             CloseScripts(Scripts)
-            
-        case '--sep':
-            Vars['scriptsSep'] := GetValue() 
-            Verbose('Set separator: ' GetValue())
-            
-        case '--run', '--close':
-            _scripts := GetScripts()
-            if !_scripts.count
-                continue ParseArgs
-            
-            switch arg, false {
-            case '--run':
-                RunScripts(_scripts)
-            case '--close':
-                CloseScripts(_scripts)
-            }   
-                    
-        case '--add', '--remove':        
-            _scripts := GetScripts()            
-            if !_scripts.count
-                continue ParseArgs
-
-            switch arg, false {
-            case '--add':
-                for script, state in _scripts {
-                    Scripts.Set(script, true)
-                    Verbose('Add "' script '"')
-                }
-            case '--remove':
-                for script, state in _scripts {
-                    if !Scripts.Has(script) {
-                        Warning('Cannot remove non-saved script: "' script '"', 'Script')
-                        continue ParseArgs
-                    }
-                    
-                    Scripts.Set(script, 'unset')
-                    Verbose('Remove "' script '"')
-                }
-            } 
-           
+                   
         case '-vars':
             Message(Vars.ToString())           
         case '-scripts':
@@ -462,7 +423,32 @@ ParseCommandLine() {
         case '-verbose':
             IsVerbose := true
         case '--help', '-h', '-?':
-            ShowHelpMessage()
+            ShowHelpMessage()    
+        case '--sep':
+            Vars['scriptsSep'] := GetValue() 
+            Verbose('Set separator: ' GetValue())
+
+        case '--run':
+            RunScripts(GetScripts())
+        case '--close':
+            CloseScripts(GetScripts())
+            
+        case '--add':
+            for script, state in GetScripts() {
+                Scripts.Set(script, true)
+                Verbose('Add "' script '"')
+            }
+            
+        case '--remove':
+            for script, state in GetScripts() {
+                if !Scripts.Has(script) {
+                    Warning('Cannot remove non-saved script: "' script '"', 'Script')
+                    continue ParseArgs
+                }
+                
+                Scripts.Set(script, 'unset')
+                Verbose('Remove "' script '"')
+            }
             
         default:
             if !pair.Has(2) {
