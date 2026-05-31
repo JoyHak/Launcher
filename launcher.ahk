@@ -24,22 +24,31 @@ ShowHelpMessage() {
     synopsis := 
     (
     "Parameters:
-      --run     run script(s)
-      --close   close script(s)
-      --add     add script(s)
-      --remove  remove script(s)
-      --sep     set separator between scripts
+      --add      add script(s)
+      --enable   enable script(s) or
+                 add script(s) and enable
+                 
+      --disable  disable script(s) or
+                 add script(s) and disable
+      
+      --run      run enabled script(s)
+      --close    close running script(s)
+      --remove   remove saved script(s)
+      
+      --sep      set separator between scripts
 
     Switches:
-      -autorun         run all script
-      -autoclose       close all script
+      -autorun         run all enabled scripts
+      -autoclose       close all running scripts
+      
       -vars            show saved variables
       -scripts         show saved scripts
       -vars-clear      clear saved variables
       -scripts-clear   clear saved scripts
+      
       -verbose         show additional messages
       <gray>-h, -?           show this help message</gray>
-
+      
     Pass one or more scripts, separated by <green>;</green>
       launcher --run=quickswitch<green>;</green>radify
 
@@ -134,17 +143,16 @@ Vars      := Map('scriptsSep', ';')
 #include <commandLine>
 
 
-ReadVariables()
-ReadScripts()
+ReadVariables(&Vars)
+ReadScripts(&Scripts)
 
 if (A_Args.length) {
     ParseCommandLine()
-    Vars.Write('variables')
-    Scripts.Write('scripts')
-    ExitApp()
+    WriteAndExit()
 } else {
-    ShowMainGui()
+    ScriptManager()
     
-    Hotkey('$^+s', (*) => ShowMainGui())
+    ; Hotkey('$^+s', (*) => ScriptManager())
+    Hotkey('$^+s', (*) => Reload())
     Hotkey('$^+d', (*) => ExitApp())
 }
