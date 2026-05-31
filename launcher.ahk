@@ -252,7 +252,7 @@ Map.prototype.DefineProp('Write', {call: MapWrite})
 Message(text, icon := '') {
     static colorTagsPattern := 's)<(\w+)>(.*?)</\1>'
     
-    static colorMap := Map(
+    static colors := Map(
         'black',    0,
         'blue',     1,
         'green',    2,
@@ -263,40 +263,43 @@ Message(text, icon := '') {
         'white',    7,
         'gray',     8,
     )
+    
+    normalColor := colors['white']
+    
+    static STD_INPUT_HANDLE   := -10
+    static STD_OUTPUT_HANDLE  := -11
+    static STD_ERROR_HANDLE   := -12
 
-    normalColor := colorMap['white']
+    static hConsole := DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE) 
+    
+    Print(msg, color := normalColor) {
+        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', color)
+        FileAppend(msg, 'CONOUT$')
+    }
     
     try {
-        static hConsole := DllCall('GetStdHandle', 'int', -11)
         pos := 1
-        
         while (pos <= StrLen(text)) {
             if (RegExMatch(text, colorTagsPattern, &match, pos)) {
                 ; Print normal text before the match
                 normalText := SubStr(text, pos, match.Pos - pos)
-                if (normalText) {
-                    DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
-                    FileAppend(normalText, 'CONOUT$')
-                }
+                if (normalText)
+                    Print(normalText)
                 
                 ; Print colored text
-                color := colorMap.Has(match[1]) ? colorMap[match[1]] : normalColor
-                DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', color)
-                FileAppend(match[2], 'CONOUT$')
+                Print(match[2], colors.Get(match[1], normalColor))
                 
                 ; Move position forward
                 pos := match.Pos + match.Len
             } else {
                 ; Print remaining text
-                DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
-                FileAppend(SubStr(text, pos), 'CONOUT$')
+                Print(SubStr(text, pos))
                 break
             }
         }
         
         ; Reset color
-        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', normalColor)
-        FileAppend('`n', 'CONOUT$')
+        Print('`n')
     } catch {
         text := RegExReplace(text, colorTagsPattern, '$2')
         MsgBox(text, A_ScriptName, icon)
