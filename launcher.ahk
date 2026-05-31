@@ -26,7 +26,7 @@ ShowHelpMessage() {
        launcher --param=script1<gray>[;script2;script3...]</gray>
        launcher --param=<yellow>@file</yellow>
        launcher -switch
-       launcher <blue>variable</blue>=value
+       launcher <cyan>variable</cyan>=value
 
      Parameters:
        <cyan>--run</cyan>     run script(s)
@@ -77,20 +77,32 @@ ShowHelpMessage() {
        It can be passed to any parameter.
 
      <cyan>Parameters|switches</cyan> order affects events sequence:
-       launcher <green>-autoclose</green> --run=quickswitch    close all scripts, then launch quickswitch
-       launcher --run=quickswitch <green>-autoclose</green>    launch quickswitch, then close all scripts
-       launcher --add=<yellow>@list.ini</yellow> <green>-autoclose</green>        save multiple scripts and run them
+       launcher <cyan>-autoclose</cyan> <green>--run</green>=quickswitch    close all scripts, then launch quickswitch
+       launcher <green>--run</green>=quickswitch <cyan>-autoclose</cyan>    launch quickswitch, then close all scripts
+       launcher <green>--add</green>=<yellow>@list.ini</yellow> <cyan>-autoclose</cyan>      save multiple scripts and run them
 
-     Assigned variable will be saved:
-       launcher mainDir=<blue>%A_ScriptDir%</blue>\DarkGui
+     Assigned <cyan>variable</cyan> will be saved:
+       launcher <cyan>mainDir</cyan>=C:\Scripts\DarkGui
        launcher --run=<blue>%mainDir%</blue>\DarkTheme.ahk
-
-     Variables and separator can be assigned on the fly:
-       launcher <cyan>AhkDir=C:\Ahk</cyan> --run=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir=C:\Scripts</cyan> --run=<blue>%AhkDir%</blue>\radify
-
-     You can remove variable by assigning empty value or <magenta>'unset'</magenta>:
-       launcher AhkDir=
-       launcher AhkDir=<magenta>unset</magenta>"
+    
+       New value can contain variable too:
+       launcher <cyan>mainDir</cyan>=<blue>%A_ScriptDir%</blue>\DarkGui
+    
+       Value can be changed on the fly:
+         launcher <cyan>AhkDir</cyan>=C:\Ahk <green>--run</green>=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir</cyan>=C:\Scripts <green>--run</green>=<blue>%AhkDir%</blue>\radify
+       
+       Variable can be removed:
+         launcher <cyan>AhkDir</cyan>=
+         launcher <cyan>AhkDir</cyan>=<magenta>unset</magenta>
+        
+       You can use AutoHotkey built-in/saved/environment variables anywhere:
+         launcher --run=<blue>%A_ScriptFullPath%</blue> --run=<blue>%A_ScriptDir%</blue>\quickswitch.ahk
+         launcher --close=<blue>%TEMP%</blue>\junk.ahk --run=<blue>%A_Temp%</blue>\junk.ahk
+         launcher --add=<blue>%ConEmuDir%</blue>\update.py
+         
+       ...and include them to <yellow>@file</yellow>:
+         C:\<blue>%A_Temp%</blue>\script.ahk     line from <yellow>@list.ini</yellow>
+         launcher --add=<yellow>@list.ini</yellow>   will add 'C:\<blue>%A_Temp%</blue>\script.ahk'"
     )
 }
 
