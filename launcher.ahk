@@ -312,11 +312,17 @@ Verbose(msg) {
 }
 
 Warning(msg, what := A_ScriptName) {
-    Message(Format('<yellow>{} warning - {}</yellow>', what, msg), 'Icon!')
+    Message(
+        Format('<yellow>{} warning - {}</yellow>', what, msg), 
+        'Icon!'
+    )
 }
 
 Err(msg, what := A_ScriptName) {
-    Message(Format('<red>{} error - {}</red>', what, msg), 'Iconx')
+    Message(
+        Format('<red>{} error - {}</red>', what, msg), 
+        'Iconx'
+    )
 }
 
 OnError(Exception)
