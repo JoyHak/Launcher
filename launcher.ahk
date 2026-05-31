@@ -23,94 +23,110 @@ Scripts := Map()
 Vars := Map('scriptsSep', ';')
 
 ShowHelpMessage() {
-    Message
-    (`
+    usage := 
+    (
     "<gray>Launch saved scripts and applications.
     Copyright (c) 2026 Rafaello
-    https://github.com/JoyHak/Launcher
-    </gray>
-
-    <green>Usage:
+    https://github.com/JoyHak/Launcher</gray>
+    
+    Usage:
       launcher --param=script1<gray>[;script2;script3...]</gray>
       launcher --param=<yellow>@file</yellow>
       launcher -switch
-      launcher <cyan>variable</cyan>=value</green>
-
-    Parameters:
-      <cyan>--run</cyan>     run script(s)
-      <cyan>--close</cyan>   close script(s)
-      <cyan>--add</cyan>     add script(s)
-      <cyan>--remove</cyan>  remove script(s)
-      <cyan>--sep</cyan>     set separator between scripts
+      launcher <cyan>variable</cyan>=value
+    
+"
+)
+    synopsis := 
+    (
+    "Parameters:
+      --run     run script(s)
+      --close   close script(s)
+      --add     add script(s)
+      --remove  remove script(s)
+      --sep     set separator between scripts
 
     Switches:
-      <cyan>-autorun</cyan>         run all script
-      <cyan>-autoclose</cyan>       close all script
-      <cyan>-vars</cyan>            show saved variables
-      <cyan>-scripts</cyan>         show saved scripts
-      <cyan>-vars-clear</cyan>      clear saved variables
-      <cyan>-scripts-clear</cyan>   clear saved scripts
-      <cyan>-verbose</cyan>         show additional messages
-      <gray>-h, -?</gray>           show this help message
+      -autorun         run all script
+      -autoclose       close all script
+      -vars            show saved variables
+      -scripts         show saved scripts
+      -vars-clear      clear saved variables
+      -scripts-clear   clear saved scripts
+      -verbose         show additional messages
+      <gray>-h, -?           show this help message</gray>
 
     Pass one or more scripts, separated by <green>;</green>
       launcher --run=quickswitch<green>;</green>radify
 
     Separator can be changed:
-      launcher <cyan>--sep</cyan>=<green>^</green> --run=quickswitch<green>^</green>radify
+      launcher --sep=<green>^</green> --run=quickswitch<green>^</green>radify
       launcher --run=arrows<green>^</green>chars  separator is saved
 
     You can specify full path or filename only:
       launcher --run=quickswitch
       launcher --run=C:\Ahk\quickswitch
+      
+"
+)
+    examples := 
+    (
+    "Multiple scripts can be read from @file:
+      launcher --add=@list.ini
+      launcher --remove=@list.ini
 
-    Multiple scripts can be read from <yellow>@file</yellow>:
-      launcher --add=<yellow>@list.ini</yellow>
-      launcher --remove=<yellow>@list.ini</yellow>
-
-      <yellow>@file</yellow> can be quoted full path:
+      @file can be quoted full path:
         launcher --run=<yellow>@'C:\Temp files\My scripts'</yellow>
         launcher --run=<yellow>'@C:\Temp files\My scripts'</yellow>
 
         or path with variables:
-        launcher list=C:\listfile.ini --add=@<blue>%list%</blue>
+        launcher list=C:\listfile.ini --add=@%list%
 
-      <yellow>@file</yellow> may contain scripts, variables and
+      @file may contain scripts, variables and
       strings, separated by <cyan>--sep</cyan>:
         C:\s1.ahk<green>;</green>C:\s2.ahk
-        C:\<blue>%A_Temp%</blue>\s3.ahk
-        C:\<blue>%myvar%</blue>\s4.ahk
+        C:\%A_Temp%\s3.ahk
+        C:\%myvar%\s4.ahk
 
       It can be passed to any parameter.
-
+    
     <cyan>Parameters|switches</cyan> order affects events sequence:
       launcher <cyan>-autoclose</cyan> <green>--run</green>=quickswitch    close all scripts, then launch quickswitch
       launcher <green>--run</green>=quickswitch <cyan>-autoclose</cyan>    launch quickswitch, then close all scripts
-      launcher <green>--add</green>=<yellow>@list.ini</yellow> <cyan>-autoclose</cyan>      save multiple scripts and run them
-
+      launcher <green>--add</green>=@list.ini <cyan>-autoclose</cyan>      save multiple scripts and run them
+    
     Assigned <cyan>variable</cyan> will be saved:
-      launcher <cyan>mainDir</cyan>=C:\Scripts\DarkGui
-      launcher --run=<blue>%mainDir%</blue>\DarkTheme.ahk
+      launcher mainDir=C:\Scripts\DarkGui
+      launcher --run=%mainDir%\DarkTheme.ahk
     
       New value can contain variable too:
-      launcher <cyan>mainDir</cyan>=<blue>%A_ScriptDir%</blue>\DarkGui
+      launcher mainDir=%A_ScriptDir%\DarkGui
     
       Value can be changed on the fly:
-        launcher <cyan>AhkDir</cyan>=C:\Ahk <green>--run</green>=<blue>%AhkDir%</blue>\quickswitch <cyan>AhkDir</cyan>=C:\Scripts <green>--run</green>=<blue>%AhkDir%</blue>\radify
+        launcher AhkDir=C:\Ahk <green>--run</green>=%AhkDir%\quickswitch AhkDir=C:\Scripts <green>--run</green>=%AhkDir%\radify
       
       Variable can be removed:
-        launcher <cyan>AhkDir</cyan>=
-        launcher <cyan>AhkDir</cyan>=<magenta>unset</magenta>
+        launcher AhkDir=
+        launcher AhkDir=<magenta>unset</magenta>
        
       You can use AutoHotkey built-in/saved/environment variables anywhere:
-        launcher --run=<blue>%A_ScriptFullPath%</blue> --run=<blue>%A_ScriptDir%</blue>\quickswitch.ahk
-        launcher --close=<blue>%TEMP%</blue>\junk.ahk --run=<blue>%A_Temp%</blue>\junk.ahk
-        launcher --add=<blue>%ConEmuDir%</blue>\update.py
+        launcher --run=%A_ScriptFullPath% --run=%A_ScriptDir%\quickswitch.ahk
+        launcher --close=%TEMP%\junk.ahk --run=%A_Temp%\junk.ahk
+        launcher --add=%ConEmuDir%\update.py
         
-      ...and include them to <yellow>@file</yellow>:
-        C:\<blue>%A_Temp%</blue>\script.ahk     line from <yellow>@list.ini</yellow>
-        launcher --add=<yellow>@list.ini</yellow>   will add 'C:\<blue>%A_Temp%</blue>\script.ahk'"
-    )
+      ...and include them to @file:
+        C:\%A_Temp%\script.ahk     line from @list.ini
+        launcher --add=@list.ini   will add 'C:\%A_Temp%\script.ahk'
+
+"
+)
+
+    Colorize(&synopsis,    '[\-]+[\-\w]+',           'cyan')
+    Colorize(&examples,    '(mainDir|AhkDir)(?=\=)', 'cyan')
+    Colorize(&examples,    '%[^%]+%',                'blue')
+    Colorize(&examples,    '@(file|list\.ini)',      'yellow')
+    
+    Message(usage . synopsis . examples)
 }
 
 ;── Menu ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -369,6 +385,15 @@ Exception(ex, *) {
     ExitApp(12)
 }
 
+
+
+Colorize(&str, regex, colorTag) {
+    str := RegExReplace(
+        str, 
+        regex,
+        Format('<{1}>$0</{1}>', colorTag)
+    )
+}
 
 MapToString(m) {
     str := ''
