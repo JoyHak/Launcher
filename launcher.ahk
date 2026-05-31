@@ -24,11 +24,11 @@ ShowHelpMessage() {
     https://github.com/JoyHak
     </gray>
 
-    Usage:
+    <green>Usage:
       launcher --param=script1<gray>[;script2;script3...]</gray>
       launcher --param=<yellow>@file</yellow>
       launcher -switch
-      launcher <cyan>variable</cyan>=value
+      launcher <cyan>variable</cyan>=value</green>
 
     Parameters:
       <cyan>--run</cyan>     run script(s)
@@ -251,9 +251,15 @@ Map.prototype.DefineProp('Write', {call: MapWrite})
 
 ;── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-Message(text, icon := '') {
-    static colorTagsPattern := 's)<(\w+)>(.*?)</\1>'
-    
+GetOutputHandle() {
+    static STD_INPUT_HANDLE   := -10
+    static STD_OUTPUT_HANDLE  := -11
+    static STD_ERROR_HANDLE   := -12
+
+    return DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE)     
+}
+
+Output(text, color := 'white') {
     static colors := Map(
         'black',    0,
         'blue',     1,
@@ -266,45 +272,44 @@ Message(text, icon := '') {
         'gray',     8,
     )
     
-    normalColor := colors['white']
+    normalColor := colors.Get(color, 7)
     
-    static STD_INPUT_HANDLE   := -10
-    static STD_OUTPUT_HANDLE  := -11
-    static STD_ERROR_HANDLE   := -12
-
-    static hConsole := DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE) 
-    
-    Print(msg, color := normalColor) {
-        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', color)
+    Print(msg, _color := normalColor) {
+        static hConsole := GetOutputHandle()
+        DllCall('SetConsoleTextAttribute', 'ptr', hConsole, 'uint', _color)
         FileAppend(msg, 'CONOUT$')
     }
-    
-    try {
-        pos := 1
-        while (pos <= StrLen(text)) {
-            if (RegExMatch(text, colorTagsPattern, &match, pos)) {
-                ; Print normal text before the match
-                normalText := SubStr(text, pos, match.Pos - pos)
-                if (normalText)
-                    Print(normalText)
-                
-                ; Print colored text
-                Print(match[2], colors.Get(match[1], normalColor))
-                
-                ; Move position forward
-                pos := match.Pos + match.Len
-            } else {
-                ; Print remaining text
-                Print(SubStr(text, pos))
-                break
-            }
+
+    pos := 1
+    while (pos <= StrLen(text)) {
+        if (RegExMatch(text, 's)<(\w+)>(.*?)</\1>', &match, pos)) {
+            ; Print normal text before the match
+            normalText := SubStr(text, pos, match.pos - pos)
+            if (normalText)
+                Print(normalText)
+            
+            ; Handle nested tags
+            Output(match[2], match[1])
+            
+            ; Move position forward
+            pos := match.pos + match.len
+        } else {
+            ; Print remaining text
+            Print(SubStr(text, pos))
+            break
         }
-        
-        ; Reset color
-        Print('`n')
-    } catch {
-        text := RegExReplace(text, colorTagsPattern, '$2')
-        MsgBox(text, A_ScriptName, icon)
+    }
+}
+
+Message(msg, icon := '', normalColor := 'white') {
+    try {
+        Output(msg '`n', normalColor)
+    } catch OSError as ex {
+        if (ex.number != 6)
+            throw ex  ; not a console issue
+    
+        msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
+        MsgBox(msg, A_ScriptName, icon)
     }
 }
 
