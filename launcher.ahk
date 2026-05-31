@@ -3,12 +3,19 @@
 #ErrorStdOut
 #Warn All, StdOut
 #SingleInstance ignore
+
 ;@Ahk2Exe-ConsoleApp
+;@Ahk2Exe-SetMainIcon clock.ico
+;@Ahk2Exe-SetCopyright Rafaello
+;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
+;@Ahk2Exe-SetLegalTrademarks MIT license
 
 Persistent()
 KeyHistory(0)
 ListLines(false)
 SetWorkingDir(A_ScriptDir)
+
+try TraySetIcon('clock.ico')
 
 INI := 'launcher.ini'
 IsVerbose := false
@@ -19,9 +26,9 @@ Vars := Map('scriptsSep', ';')
 ShowHelpMessage() {
     Message
     (`
-    "<gray>Launches pre-defined apps and scripts.
+    "<gray>Launch saved scripts and applications.
     Copyright (c) 2026 Rafaello
-    https://github.com/JoyHak
+    https://github.com/JoyHak/Launcher
     </gray>
 
     <green>Usage:
