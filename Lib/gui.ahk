@@ -73,15 +73,20 @@ class ScriptManager {
 
     RefreshScripts(*) {
         this.scripts.Delete()
-
+        
+        imagesId := IL_Create(Scripts.count)
+        this.scripts.SetImageList(imagesId)
+        
+        count := 0
+        running := GetRunningScripts()
         for script, state in Scripts {
-            switch state, false {
-            case  true:     displayState := 'enabled'
-            case  false:    displayState := 'disabled'
-            case 'unset':   continue
-            }
+            state := running.Get(script, state)
             
-            this.scripts.Add('', script, displayState)
+            if (state = 'unset')
+                continue
+            
+            IL_Add(imagesId, 'Icons\' state '.ico')
+            this.scripts.Add('Icon' (++count), script, state)
         }
 
         this.scripts.ModifyCol()  ; Auto-size each column
@@ -129,14 +134,24 @@ class ScriptManager {
         if !(script := this.GetSelected(this.scripts))
             return
         
-        RunScripts(Map(script, true))
+        if !Scripts.Has(script) {
+            this.status.text := 'Cannot run non-existing script'
+            return
+        }
+        
+        RunScripts(Map(script, Scripts[script]))
     }
 
     CloseScript(*) {
         if !(script := this.GetSelected(this.scripts))
             return
         
-        CloseScripts(Map(script, true))
+        if !Scripts.Has(script) {
+            this.status.text := 'Cannot close non-existing script'
+            return
+        }
+        
+        CloseScripts(Map(script, Scripts[script]))
     }
         
     RemoveVariable(*) {
@@ -185,9 +200,19 @@ class ScriptManager {
     AddScript(*) {
         if !(path := this.GetValue(this.scripts))
             return
+        
+        path := ExpandVariables(path)
 
-        for script, state in ParseScripts(path, Vars['scriptsSep'])
-            Scripts.Set(script, true)
+        if (SubStr(path, 1, 1) = '@') {
+            path := SubStr(path, 2)  ; omit @
+            _scripts := ParseFile(path, Vars['scriptsSep'])
+        } else {
+            _scripts := ParseScripts(path, Vars['scriptsSep'])
+        }
+            
+        for script, state in _scripts {
+            Scripts.Set(script, state)
+        }
 
         this.RefreshScripts()
     }

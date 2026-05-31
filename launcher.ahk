@@ -1,7 +1,7 @@
 #Requires Autohotkey v2
 #Warn
 
-;@Ahk2Exe-SetMainIcon clock.ico
+;@Ahk2Exe-SetMainIcon Icons\clock.ico
 ;@Ahk2Exe-SetCopyright Rafaello
 ;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
 ;@Ahk2Exe-SetLegalTrademarks MIT license
@@ -114,12 +114,11 @@ ShowHelpMessage() {
 }
 
 
-Persistent()
 KeyHistory(0)
 ListLines(false)
 SetWorkingDir(A_ScriptDir)
 
-try TraySetIcon('clock.ico')
+try TraySetIcon('Icons\clock.ico')
 
 INI       := 'launcher.ini'
 IsVerbose := false
