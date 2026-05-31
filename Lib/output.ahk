@@ -18,6 +18,7 @@ AttachOutput() {
     DllCall('AttachConsole', 'int', -1)
     
     OnExit(FreeOutput)
+    OnError(Exception)
 }
 
 Output(text, color := 'white') {
@@ -77,10 +78,7 @@ Output(text, color := 'white') {
 Message(msg, icon := '', normalColor := 'white') {
     try {
         Output(msg '`n', normalColor)
-    } catch OSError as ex {
-        if (ex.number != 6)
-            throw ex  ; not a console issue
-    
+    } catch {    
         msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
         MsgBox(msg, A_ScriptName, icon)
     }
@@ -105,12 +103,10 @@ Err(msg, what := A_ScriptName) {
     )
 }
 
-OnError(Exception)
 Exception(ex, *) {
     Err(ex.message '`n' ex.extra, ex.what)
     ExitApp(12)
 }
-
 
 
 Colorize(&str, regex, colorTag) {
