@@ -44,14 +44,7 @@ Output(text, color := 'white') {
             'uint', _color
         )
         
-        DllCall(
-            'WriteConsoleW',
-			'UPtr', hConsole,
-			'Str',  msg,
-			'UInt', StrLen(msg),
-			'UInt*', 0,
-			'uint',  0
-        )
+        FileAppend(msg, 'CONOUT$')
     }
 
     pos := 1
