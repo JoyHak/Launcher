@@ -118,6 +118,12 @@ ParseCommandLine() {
             
         case '-verbose':
             global IsVerbose := true
+        
+        case '-save': 
+            WriteAll()
+        case '-restore': 
+            RestoreAll()
+            
         case '-h', '-?':
             ShowHelpMessage()    
         case '--sep':

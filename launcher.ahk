@@ -6,7 +6,7 @@
 ;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
 ;@Ahk2Exe-SetLegalTrademarks MIT license
 
-ShowHelpMessage() {
+ShowHelpMessage(*) {
     usage := 
     (
     "<gray>Launch saved scripts and applications.
@@ -46,8 +46,16 @@ ShowHelpMessage() {
       -vars-clear      clear saved variables
       -scripts-clear   clear saved scripts
       
+      -save            write all data to the drive.
+                       <gray>Typically data is written to disk after all params
+                       parameters have been processed to reduce disk usage.</gray>
+                   
+      -restore         restore all data from the drive.
+                       <gray>If -save was passed, restores previous version. 
+                       Otherwise, it updates the data in memory from disk.</gray>
+      
       -verbose         show additional messages
-      <gray>-h, -?           show this help message</gray>
+      <gray>-h, -?           show this help message
       
     Pass one or more scripts, separated by <green>;</green>
       launcher --run=quickswitch<green>;</green>radify
@@ -143,8 +151,7 @@ Vars      := Map('scriptsSep', ';')
 #include <commandLine>
 
 
-Scripts.Read('scripts')
-Vars.Read('variables')
+ReadAll()
 
 if (A_Args.length) {
     ParseCommandLine()

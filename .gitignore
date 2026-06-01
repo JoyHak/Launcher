@@ -1,3 +1,5 @@
 *.ini
+*.old
+*.bak
 *.exe
 launcher-*
