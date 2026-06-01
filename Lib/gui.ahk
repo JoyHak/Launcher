@@ -73,15 +73,16 @@ class ScriptManager {
         ui.Button('yp-2 w40',   'Set', ,    f('SetSeparator'))
         
         this.scripts.btns := {}
-        ui.Button(new, 'Add',     r(this.scripts.btns, 'add'),     f('AddScript'))
-        ui.Button(,    'Load',    r(this.scripts.btns, 'load'),    f('LoadScript'))
-                                                               
-        ui.Button(,    'Remove',  r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
-        ui.Button(,    'Run',     r(this.scripts.btns, 'run'),     f('RunScripts'))
-        ui.Button(,    'Close',   r(this.scripts.btns, 'close'),   f('CloseScripts'))
-                                                               
-        ui.Button(,    'Refresh', r(this.scripts.btns, 'refresh'), f('Refresh'))
-        ui.Button(,    'Save', ,  WriteAll)
+        ui.Button(new, 'Add',       r(this.scripts.btns, 'add'),     f('AddScript'))
+        ui.Button(,    'Load',      r(this.scripts.btns, 'load'),    f('LoadScript'))
+                                                                 
+        ui.Button(,    'Remove',    r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
+        ui.Button(,    'Run',       r(this.scripts.btns, 'run'),     f('RunScripts'))
+        ui.Button(,    'Close',     r(this.scripts.btns, 'close'),   f('CloseScripts'))
+                                                                 
+        ui.Button(,    'Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
+        ui.Button(,    'Save', ,    WriteAll)
+        ui.Button(,    'Restore',,  (*) => (RestoreAll(), this.Refresh()))
         
         this.status := ui.AddText(new ' w760')
         
