@@ -4,12 +4,18 @@ Object.Prototype.DefineProp(
     'Assign', { Call: (ctrl, &var) => (var := ctrl) }
 )
 
-Gui.control.Prototype.DefineProp(
+Gui.Control.Prototype.DefineProp(
     'Color', { Call: (ctrl, color?) => (
         IsSet(color)
           ? ctrl.Opt(Format('+Redraw +Background{:x}', color))
           : ctrl.Opt(Format('+Redraw -Background')), 
           ctrl
+    ) }
+)
+
+Gui.Button.Prototype.DefineProp(
+    'Default', { Set: (btn, state := true) => (
+        btn.Opt(Format('{}Default', state ? '+' : '-'))
     ) }
 )
 
@@ -57,14 +63,14 @@ class ScriptManager {
         ui.Label('x+m yp+4', 'yp-4 w550', 'Value:',    r(this.vars, 'content'))
         
         this.vars.btns := {}
-        ui.Button(new,         'Add',                  r(this.vars.btns, 'add'),     f('AddVariable'))
+        ui.Button(new,         '&Add',                 r(this.vars.btns, 'add'),     f('AddVariable'))
         ui.Button(,            'Remove',               r(this.vars.btns, 'remove'),  f('RemoveVariables'))
         
         ui.AddText('xm y+30',  'Saved scripts:')
         ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadScriptValue'))
         
-        ui.Label(,new ' w700', 'Script or file path:', r(this.scripts, 'edit'))
-        ui.Button(,            'Browse', ,  f('BrowsePath'))
+        ui.Label(,new ' w700', 'Script or file &path:',r(this.scripts, 'edit'))
+        ui.Button(,            '&Browse', ,  f('BrowsePath'))
         
         ui.Label(,'yp-4 w30 Limit1','Separator:',      r(this, 'sep'))
         this.sep.value := Vars['scriptsSep']
@@ -72,18 +78,18 @@ class ScriptManager {
         ui.Button('yp-2 w40',   'Set', ,    f('SetSeparator'))
         
         this.scripts.btns := {}
-        ui.Button(new, 'Add',       r(this.scripts.btns, 'add'),     f('AddScript'))
-        ui.Button(,    'Load',      r(this.scripts.btns, 'load'),    f('LoadScript'))
+        ui.Button(new, 'Add',        r(this.scripts.btns, 'add'),      f('AddScript'))
+        ui.Button(,    '&Load',      r(this.scripts.btns, 'load'),    f('LoadScript'))
                                                                  
-        ui.Button(,    'Remove',    r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
-        ui.Button(,    'Disable',   r(this.scripts.btns, 'disable'), f('DisableScripts'))
-        ui.Button(,    'Run',       r(this.scripts.btns, 'run'),     f('RunScripts'))
-        ui.Button(,    'Close',     r(this.scripts.btns, 'close'),   f('CloseScripts'))
+        ui.Button(,    '&Remove',    r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
+        ui.Button(,    '&Disable',   r(this.scripts.btns, 'disable'), f('DisableScripts'))
+        ui.Button(,    '&Run',       r(this.scripts.btns, 'run'),     f('RunScripts'))
+        ui.Button(,    '&Close',     r(this.scripts.btns, 'close'),   f('CloseScripts'))
                                                                  
-        ui.Button(,    'Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
-        ui.Button(,    'Save', ,    WriteAll)
-        ui.Button(,    'Restore',,  (*) => (RestoreAll(), this.Refresh()))
-        ui.Button('x+50 w30','?',,  ShowHelpMessage)
+        ui.Button(,    '&Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
+        ui.Button(,    '&Save', ,    WriteAll)
+        ui.Button(,    'Res&tore',,  (*) => (RestoreAll(), this.Refresh()))
+        ui.Button('x+50 w30','&?',,  ShowHelpMessage)
         
         this.status := ui.AddText(new ' w760')
         
@@ -154,6 +160,8 @@ class ScriptManager {
         this.scripts.btns.run.enabled    := false
         this.scripts.btns.close.enabled  := false
         this.scripts.btns.remove.enabled := false
+        this.scripts.btns.add.default    := true
+        this.scripts.btns.add.text       := 'Add'
     }
     
     Refresh(*) {
@@ -210,6 +218,7 @@ class ScriptManager {
         
         if (state = 'disabled') {
             l.btns.add.Color(this.colors['enabled']).text := 'Enable'
+            l.btns.add.default := true
             
             l.btns.run.Color().enabled      := false
             l.btns.close.Color().enabled    := false
@@ -217,9 +226,10 @@ class ScriptManager {
         } else {
             l.btns.add.Color().text := 'Add'
             
+            l.btns.run.default := true
+            l.btns.disable.Color().enabled := true
             l.btns.run.Color(this.colors['running']).enabled := true
             l.btns.close.Color(this.colors['disabled']).enabled := true
-            l.btns.disable.Color().enabled := true
         }
         
         l.btns.remove.enabled := true
@@ -240,6 +250,7 @@ class ScriptManager {
         
         RunScripts(_scripts)
         SetTimer(this.RefreshScripts.Bind(this), -2000)
+        SetTimer(this.RefreshScripts.Bind(this), -6000)
     }
 
     CloseScripts(*) {
