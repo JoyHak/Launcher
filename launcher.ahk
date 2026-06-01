@@ -55,7 +55,7 @@ ShowHelpMessage(*) {
                        Otherwise, it updates the data in memory from disk.</gray>
       
       -verbose         show additional messages
-      <gray>-h, -?           show this help message
+      <gray>-h, -?           show this help message</gray>
       
     Pass one or more scripts, separated by <green>;</green>
       launcher --run=quickswitch<green>;</green>radify
@@ -122,10 +122,13 @@ ShowHelpMessage(*) {
 "
 )
 
-    Colorize(&synopsis,    '[\-]+[\-\w]+',           'cyan')
-    Colorize(&examples,    '(mainDir|AhkDir)(?=\=)', 'cyan')
-    Colorize(&examples,    '%[^%]+%',                'blue')
-    Colorize(&examples,    '@(file|list\.ini)',      'yellow')
+    synopsis := synopsis
+      .Color('[\-]+[\-\w]+', 'cyan')
+      
+    examples := examples
+      .Color('(mainDir|AhkDir)(?=\=)', 'cyan')
+      .Color('%[^%]+%',                'blue')
+      .Color('@(file|list\.ini)',      'yellow')
     
     Message(usage . synopsis . examples)
 }

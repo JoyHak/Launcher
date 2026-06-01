@@ -88,7 +88,7 @@ class ScriptManager {
         ui.Button(,    '&Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
         ui.Button(,    '&Save', ,    WriteAll)
         ui.Button(,    'Res&tore',,  (*) => (RestoreAll(), this.Refresh()))
-        ui.Button('x+50 w30','&?',,  ShowHelpMessage)
+        ui.Button('w30',     '&?',,  ShowHelpMessage)
         
         this.status := ui.AddText(new ' w760')
         
