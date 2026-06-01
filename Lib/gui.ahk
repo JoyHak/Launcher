@@ -122,10 +122,10 @@ class ScriptManager {
         count   := 0
         
         for script, state in Scripts {
-            state := running.Get(script, state)
-            
             if (state = 'unset')
                 continue
+                
+            state := running.Get(script, state)
             
             IL_Add(imagesId, 'Icons\' state '.ico')
             this.scripts.Add('Icon' (++count), script, state)
