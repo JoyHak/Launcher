@@ -8,8 +8,8 @@ ParseScripts(scriptsList, separator := ';', state := 'enabled') {
         if !script
             continue
             
-        script := ExpandVariables(script)
-        
+        script := ExpandVariables(script.Normalize())
+
         if FileExist(script) {
             Verbose('Found "' script '"')
             _scripts.Set(script, state)
