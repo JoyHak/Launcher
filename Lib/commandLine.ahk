@@ -4,7 +4,7 @@ ParseScripts(scriptsList, separator := ';', state := 'enabled') {
         return _scripts
     
     ParseArgScripts:
-    for script in StrSplit(scriptsList, separator) {
+    for script in scriptsList.Split(separator) {
         if !script
             continue
             
@@ -18,7 +18,7 @@ ParseScripts(scriptsList, separator := ';', state := 'enabled') {
         
         SearchScript:
         for path in Scripts {
-            if InStr(GetShortName(path, 1), script) {
+            if path.ShortName(1).Find(script) {
                 Verbose('"' script '" found in storage: "' path '"')
                 _scripts.Set(path, state)
                 continue ParseArgScripts
@@ -47,12 +47,12 @@ ParseCommandLine() {
 
     ParseArgs:
     for args in A_Args {
-        pair := StrSplit(args, '=')
+        pair := args.Split('=')
         arg  := pair[1]
         
         GetValue() {
             if pair.Has(2)
-                return Trim(pair[2], '"`'`t ')
+                return pair[2].Normalize()
                 
             Err('Missing value for "' arg '"', 'Parameter')
             ExitApp(2)
@@ -61,8 +61,8 @@ ParseCommandLine() {
         GetScripts(state := 'enabled') {
             path := ExpandVariables(GetValue())
 
-            if (SubStr(path, 1, 1) = '@') {
-                path := SubStr(path, 2)  ; omit @
+            if (path.Slice(1, 1) = '@') {
+                path := path.Slice(2)  ; omit @
                 return ParseFile(path, Vars['scriptsSep'], state)
             } else {
                 return ParseScripts(path, Vars['scriptsSep'], state)
@@ -75,8 +75,10 @@ ParseCommandLine() {
         case '-autoclose':
             CloseScripts(Scripts)
         case '-vars':
-            grid := Vars.ToGrid(['Name', 'Value'])
-            Colorize(&grid, 'm)^\s+Name| Value\s*$', 'gray')
+            grid := Vars
+              .ToGrid(['Name', 'Value'])
+              .Color('m)^\s+Name| Value\s*$', 'gray')
+
             Message(grid)
             
         case '-scripts':
@@ -100,14 +102,14 @@ ParseCommandLine() {
                 _scripts.Set(icon ' ' script, state)
             }
             
-            grid := _scripts.ToGrid(['  Path', 'State'])
-            
             ; Color tags will break grid alignment, 
             ; so they are added after all calculations
-            Colorize(&grid, 'm)^x\s+| disabled\s*$', 'red')
-            Colorize(&grid, 'm)^o\s+| enabled\s*$',  'cyan')
-            Colorize(&grid, 'm)^>\s+| running\s*$',  'green')
-            Colorize(&grid, 'm)^\s+Path| State\s*$', 'gray')
+            grid := _scripts
+              .ToGrid(['  Path', 'State'])
+              .Color('m)^x\s+| disabled\s*$', 'red')
+              .Color('m)^o\s+| enabled\s*$',  'cyan')
+              .Color('m)^>\s+| running\s*$',  'green')
+              .Color('m)^\s+Path| State\s*$', 'gray')
             
             Message(grid)
             

@@ -48,10 +48,10 @@ Output(text, color := 'white') {
     }
 
     pos := 1
-    while (pos <= StrLen(text)) {
+    while (pos <= text.length) {
         if (RegExMatch(text, 's)<(\w+)>(.*?)</\1>', &match, pos)) {
             ; Print normal text before the match
-            normalText := SubStr(text, pos, match.pos - pos)
+            normalText := text.Slice(pos, match.pos - pos)
             if (normalText)
                 Print(normalText)
             
@@ -62,7 +62,7 @@ Output(text, color := 'white') {
             pos := match.pos + match.len
         } else {
             ; Print remaining text
-            Print(SubStr(text, pos))
+            Print(text.Slice(pos))
             break
         }
     }
@@ -102,8 +102,8 @@ Exception(ex, *) {
 }
 
 
-Colorize(&str, regex, colorTag) {
-    str := RegExReplace(
+Colorize(str, regex, colorTag) {
+    return RegExReplace(
         str, 
         regex,
         Format('<{1}>$0</{1}>', colorTag)
