@@ -1,3 +1,5 @@
+#include "ListViewColors.ahk"
+
 Gui.Prototype.DefineProp(
     'Button', { Call: (
         (ui, options := '', text := 'Button', callback := (*) => 0) => ui
@@ -74,12 +76,14 @@ class ScriptManager {
 
     RefreshScripts(*) {
         this.scripts.Delete()
-        
+                
         imagesId := IL_Create(Scripts.count)
         this.scripts.SetImageList(imagesId)
         
-        count := 0
         running := GetRunningScripts()
+        states  := Array()  
+        count   := 0
+        
         for script, state in Scripts {
             state := running.Get(script, state)
             
@@ -88,6 +92,22 @@ class ScriptManager {
             
             IL_Add(imagesId, 'Icons\' state '.ico')
             this.scripts.Add('Icon' (++count), script, state)
+            states.Push(state)
+        }
+        
+        ; Colors can be applied only after ListView is fullfilled
+        static colors := Map(
+            'disabled', 0xe13936,
+            'enabled',  0x81e881,
+            'running',  0x34e434,
+        )
+        
+        static lvColors := ListViewColors(this.scripts)
+        lvColors.Clear()
+        
+        for state in states {
+            lvColors.Cell(A_Index, 2, , colors[state])
+            lvColors.RowSelected(A_Index, colors[state], 0x000000)
         }
 
         this.scripts.ModifyCol()  ; Auto-size each column
@@ -141,6 +161,7 @@ class ScriptManager {
         }
         
         RunScripts(Map(script, Scripts[script]))
+        SetTimer(this.RefreshScripts.Bind(this), -2000)
     }
 
     CloseScript(*) {
@@ -153,6 +174,7 @@ class ScriptManager {
         }
         
         CloseScripts(Map(script, Scripts[script]))
+        SetTimer(this.RefreshScripts.Bind(this), -2000)
     }
         
     RemoveVariable(*) {
