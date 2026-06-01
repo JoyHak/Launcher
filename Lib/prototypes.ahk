@@ -72,3 +72,17 @@ Map.prototype.DefineProp('Write',    {call: MapWrite})
 Map.prototype.DefineProp('Read',     {call: MapRead})
 Map.prototype.DefineProp('ToString', {call: MapToString})
 Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
+
+({}.DefineProp)(String.prototype, 'Slice',      {call: SubStr})
+({}.DefineProp)(String.prototype, 'Split',      {call: StrSplit})
+({}.DefineProp)(String.prototype, 'Replace',    {call: StrReplace})
+({}.DefineProp)(String.prototype, 'RTrim',      {call: RTrim})
+({}.DefineProp)(String.prototype, 'LTrim',      {call: LTrim})
+({}.DefineProp)(String.prototype, 'Trim',       {call: Trim})  
+({}.DefineProp)(String.prototype, 'Normalize',  {call: (s) => Trim(s, ' `t`r`n`"`'')})  
+({}.DefineProp)(String.prototype, 'Find',       {call: (s, needle, pos := 1) => InStr(s, needle, , pos)})
+
+({}.DefineProp)(String.prototype, 'ShortName',  {call: GetShortName})
+({}.DefineProp)(String.prototype, 'Color',      {call: Colorize})
+
+({}.DefineProp)(String.prototype, 'Length',     {get:  StrLen})
