@@ -4,10 +4,20 @@ Object.Prototype.DefineProp(
     'Assign', { Call: (ctrl, &var) => (var := ctrl) }
 )
 
+Gui.control.Prototype.DefineProp(
+    'Color', { Call: (ctrl, color?) => (
+        IsSet(color)
+          ? ctrl.Opt(Format('+Redraw +Background{:x}', color))
+          : ctrl.Opt(Format('+Redraw -Background')), 
+          ctrl
+    ) }
+)
+
 class Settings extends GUI {
     Button(options := '', text := 'Button', &var := '', callback := (*) => 0) {
         return this
           .AddButton('x+m w70 h30 ' options, text)
+          .Assign(&var)
           .OnEvent('Click', callback)
     }
     
@@ -35,43 +45,51 @@ class ScriptManager {
         new := 'xm y+10'
         
         ; todo: add buttons "disable", "clear"
+        ; todo: warning icons
         ui := Settings(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
-        ui.OnEvent('Close',  WriteAndExit)
-        ui.OnEvent('Escape', WriteAndExit)
+        ui.OnEvent('Close',   WriteAndExit)
+        ui.OnEvent('Escape',  WriteAndExit)
         
         ui.AddText(new,        'Defined variables:')
         ui.List('w800 r4',    ['Name', 'Value'],       r(this, 'vars'),     f('LoadValue'))
                                                        
         ui.Label(          , 'yp-4 w100', 'Name:',     r(this.vars, 'edit'))
-        ui.Label('x+m yp+4', 'yp-4 w200', 'Value:',    r(this.vars, 'content'))
-
-        ui.Button(new,         'Add', ,     f('AddVariable'))
-        ui.Button(,            'Remove', ,  f('RemoveVariable'))
+        ui.Label('x+m yp+4', 'yp-4 w550', 'Value:',    r(this.vars, 'content'))
+        
+        this.vars.btns := {}
+        ui.Button(new,         'Add',                  r(this.vars.btns, 'add'),     f('AddVariable'))
+        ui.Button(,            'Remove',               r(this.vars.btns, 'remove'),  f('RemoveVariable'))
         
         ui.AddText('xm y+30',  'Saved scripts:')
         ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadValue'))
         
-        ui.Label(,  'xm w620', 'Script or file path:', r(this.scripts, 'edit'))
+        ui.Label(,new ' w700', 'Script or file path:', r(this.scripts, 'edit'))
         ui.Button(,            'Browse', ,  f('BrowsePath'))
         
-        ui.Label(,'yp-4 Limit1','Separator:',          r(this, 'sep'))
+        ui.Label(,'yp-4 w30 Limit1','Separator:',      r(this, 'sep'))
         this.sep.value := Vars['scriptsSep']
         
         ui.Button('yp-2 w40',   'Set', ,    f('SetSeparator'))
         
-        this.scripts.buttons := {}
-        ui.Button(new, 'Add',     r(this.scripts.buttons, 'add'),     f('AddScript'))
-        ui.Button(,    'Load',    r(this.scripts.buttons, 'load'),    f('LoadScript'))
+        this.scripts.btns := {}
+        ui.Button(new, 'Add',     r(this.scripts.btns, 'add'),     f('AddScript'))
+        ui.Button(,    'Load',    r(this.scripts.btns, 'load'),    f('LoadScript'))
                                                                
-        ui.Button(,    'Remove',  r(this.scripts.buttons, 'remove'),  f('RemoveScript'))
-        ui.Button(,    'Run',     r(this.scripts.buttons, 'run'),     f('RunScript'))
-        ui.Button(,    'Close',   r(this.scripts.buttons, 'close'),   f('CloseScript'))
+        ui.Button(,    'Remove',  r(this.scripts.btns, 'remove'),  f('RemoveScript'))
+        ui.Button(,    'Run',     r(this.scripts.btns, 'run'),     f('RunScript'))
+        ui.Button(,    'Close',   r(this.scripts.btns, 'close'),   f('CloseScript'))
                                                                
-        ui.Button(,    'Refresh', r(this.scripts.buttons, 'refresh'), f('Refresh'))
+        ui.Button(,    'Refresh', r(this.scripts.btns, 'refresh'), f('Refresh'))
         ui.Button(,    'Save', ,  WriteAll)
         
         this.status := ui.AddText(new ' w760')
+        
+        this.colors := Map(
+            'disabled', 0xe13936,
+            'enabled',  0x81e881,
+            'running',  0x34e434,
+        )
         
         this.Refresh()
         ui.Show()
@@ -90,6 +108,7 @@ class ScriptManager {
         this.vars.ModifyCol()  ; Auto-size each column
         this.vars.edit.value := ''
         this.vars.content.value := ''
+        this.vars.btns.remove.enabled := false
     }
 
     RefreshScripts(*) {
@@ -113,24 +132,26 @@ class ScriptManager {
             states.Push(state)
         }
         
-        ; Colors can be applied only after ListView is fullfilled
-        static colors := Map(
-            'disabled', 0xe13936,
-            'enabled',  0x81e881,
-            'running',  0x34e434,
-        )
-        
+        ; Colors can be applied only after ListView is fullfilled        
         static lvColors := ListViewColors(this.scripts)
         lvColors.Clear()
         
         for state in states {
-            lvColors.Cell(A_Index, 2, , colors[state])
-            lvColors.RowSelected(A_Index, colors[state], 0x000000)
+            lvColors.Cell(A_Index, 2, , this.colors[state])
+            lvColors.RowSelected(A_Index, this.colors[state], 0x000000)
         }
 
         this.scripts.ModifyCol()  ; Auto-size each column
         this.scripts.edit.value := ''
         this.status.text := 'Loaded ' Scripts.Count ' scripts'
+        
+        ; Reset buttons colors
+        for name in this.scripts.btns.OwnProps()
+            this.scripts.btns.%name%.Color()
+            
+        this.scripts.btns.run.enabled    := false
+        this.scripts.btns.close.enabled  := false
+        this.scripts.btns.remove.enabled := false
     }
     
     Refresh(*) {
@@ -164,9 +185,21 @@ class ScriptManager {
     LoadValue(listView, row) {  
         if (row = 0)
             return
-            
-        try listView.edit.value  := listView.GetText(row, 1)
-        try listView.content.value := listView.GetText(row, 1)
+         
+        key   := listView.GetText(row, 1)
+        value := listView.GetText(row, 2)  
+        try listView.edit.value    := key
+        try listView.content.value := value
+        
+        if (value = 'disabled') {
+            try listView.btns.run.Color().enabled := false
+            try listView.btns.close.Color().enabled := false
+        } else {
+            try listView.btns.run.Color(this.colors['running']).enabled := true
+            try listView.btns.close.Color(this.colors['disabled']).enabled := true
+        }
+        
+        try listView.btns.remove.enabled := true
     }
 
     RunScript(*) {
@@ -263,7 +296,7 @@ class ScriptManager {
             return
 
         for script, state in ParseFile(path, Vars['scriptsSep'])
-            Scripts.Set(script, true)
+            Scripts.Set(script, state)
 
         this.RefreshScripts()
     }
@@ -276,6 +309,9 @@ class ScriptManager {
         }
         
         this.scripts.edit.value := f
+        
+        this.scripts.btns.add.Color(this.colors['enabled'])
+        this.scripts.btns.load.Color(this.colors['enabled'])
     }
 
     SetSeparator(*) {
@@ -312,7 +348,6 @@ class ScriptManager {
         }
     }
     
-    _Fn(name) {
-        return GetMethod(this, name).Bind(this)
-    }
+    ; Thank you, OwODemonic!
+    _Fn(name) => ObjBindMethod(this, name) 
 }
