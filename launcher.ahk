@@ -143,8 +143,8 @@ Vars      := Map('scriptsSep', ';')
 #include <commandLine>
 
 
-ReadVariables(&Vars)
-ReadScripts(&Scripts)
+Scripts.Read('scripts')
+Vars.Read('variables')
 
 if (A_Args.length) {
     ParseCommandLine()
