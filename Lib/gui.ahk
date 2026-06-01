@@ -50,7 +50,6 @@ class ScriptManager {
         r(base, name) => this._Ref(base, name)
         new := 'xm y+10'
         
-        ; todo: warning icons
         ui := Settings(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
         ui.OnEvent('Close',   WriteAndExit)
@@ -101,6 +100,9 @@ class ScriptManager {
         
         this.Refresh()
         ui.Show()
+        
+        ; Don't hook GUI windows creation
+        SetTimer(this._Fn('InstallWinHooks'), -2000)
     }
 
     RefreshVars(*) {
@@ -120,6 +122,7 @@ class ScriptManager {
     }
 
     RefreshScripts(*) {
+        Critical(-1)
         this.scripts.Delete()
                 
         imagesId := IL_Create(Scripts.count)
@@ -162,6 +165,8 @@ class ScriptManager {
         this.scripts.btns.remove.enabled := false
         this.scripts.btns.add.default    := true
         this.scripts.btns.add.text       := 'Add'
+        
+        this.scripts.lastUpdated         := A_TickCount
     }
     
     Refresh(*) {
@@ -249,8 +254,7 @@ class ScriptManager {
         }
         
         RunScripts(_scripts)
-        SetTimer(this.RefreshScripts.Bind(this), -2000)
-        SetTimer(this.RefreshScripts.Bind(this), -6000)
+        SetTimer(this._Fn('RefreshScripts'), -1000)
     }
 
     CloseScripts(*) {
@@ -267,7 +271,7 @@ class ScriptManager {
         }
         
         CloseScripts(_scripts)
-        SetTimer(this.RefreshScripts.Bind(this), -2000)
+        SetTimer(this._Fn('RefreshScripts'), -1000)
     }
         
     RemoveVariables(*) {
@@ -381,6 +385,35 @@ class ScriptManager {
         }
         
         Vars['scriptsSep'] := this.sep.value
+    }
+    
+    
+    WinEventProc(hEventHook, hwnd, idObject, idChild, idEventThread, dwmsEventTime) { 
+        if (!hwnd)
+            return false
+        
+        static timeoutMs := 2500
+        if (A_TickCount - this.scripts.lastUpdated < timeoutMs)
+            return false
+        
+        SetTimer(this._Fn('RefreshScripts'), -timeoutMs)
+        return true
+    }
+
+    InstallWinHooks() {
+        hCallback := CallbackCreate(this._Fn('WinEventProc'), 'Fast', 6)
+        
+        hHook := DllCall(  
+            'SetWinEventHook', 
+            'UInt', 0x8002, 
+            'UInt', 0x8002, 
+            'Ptr',  0, 'Ptr', hCallback, 
+            'UInt', 0, 'UInt', 0, 
+            'UInt', 0, 
+            'Ptr'
+        )
+        
+        OnExit((*) => (DllCall('UnhookWinEvent', 'Ptr', hHook), CallbackFree(hCallback)))
     }
     
     ; Meta-methods to add syntax sugar
