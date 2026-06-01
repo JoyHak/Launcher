@@ -1,59 +1,77 @@
 #include "ListViewColors.ahk"
 
-Gui.Prototype.DefineProp(
-    'Button', { Call: (
-        (ui, options := '', text := 'Button', callback := (*) => 0) => ui
-        .AddButton('x+m w70 h30 ' options, text)
-        .OnEvent('Click', callback)
-    )}
+Object.Prototype.DefineProp(
+    'Assign', { Call: (ctrl, &var) => (var := ctrl) }
 )
+
+class Settings extends GUI {
+    Button(options := '', text := 'Button', &var := '', callback := (*) => 0) {
+        return this
+          .AddButton('x+m w70 h30 ' options, text)
+          .OnEvent('Click', callback)
+    }
+    
+    List(options := '', columns := [], &var := '', callback := (*) => 0) {
+        return this
+          .AddListView('xm Grid -Multi ' options, columns)
+          .Assign(&var)
+          .OnEvent('Click', callback)
+    }
+    
+    Label(textOptions := '', editOptions := '', text := 'Label:', &var := '') {
+        this.AddText('xm y+10 ' textOptions, text)
+        
+        return this
+          .AddEdit('x+m ' editOptions)
+          .Assign(&var)
+    }
+}
 
 class ScriptManager {
     __New() {
-        ; todo: disable, clear
-        ui := Gui(, 'Script manager')
+        ; Syntax sugar to improve readability and alignment
+        f(name) => this._Fn(name)
+        r(base, name) => this._Ref(base, name)
+        new := 'xm y+10'
+        
+        ; todo: add buttons "disable", "clear"
+        ui := Settings(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
         ui.OnEvent('Close',  WriteAndExit)
         ui.OnEvent('Escape', WriteAndExit)
         
-        ui.AddText('xm',        'Defined variables:')
-        this.vars := ui.AddListView('xm w800 Grid -Multi r4',  ['Name', 'Value'])
-        this.vars.OnEvent('Click',          this.LoadValue.Bind(this))
+        ui.AddText(new,        'Defined variables:')
+        ui.List('w800 r4',    ['Name', 'Value'],       r(this, 'vars'),     f('LoadValue'))
+                                                       
+        ui.Label(          , 'yp-4 w100', 'Name:',     r(this.vars, 'edit'))
+        ui.Label('x+m yp+4', 'yp-4 w200', 'Value:',    r(this.vars, 'content'))
 
-        ui.AddText('xm y+10 Section', 'Name:')
-        this.vars.edit := ui.AddEdit('x+m ys-4 w100')
-
-        ui.AddText('x+m ys',    'Value:')
-        this.vars.content := ui.AddEdit('x+m ys-4 w200')
-
-        ui.Button('xm y+10',    'Add',      this.AddVariable.Bind(this))
-        ui.Button(,             'Remove',   this.RemoveVariable.Bind(this))
+        ui.Button(new,         'Add', ,     f('AddVariable'))
+        ui.Button(,            'Remove', ,  f('RemoveVariable'))
         
-        ui.AddText('xm y+30',   'Saved scripts:')
-        this.scripts := ui.AddListView('xm w800 Grid -Multi r10',  ['Path', 'State'])
-        this.scripts.OnEvent('Click',       this.LoadValue.Bind(this))
-        this.scripts.OnEvent('DoubleClick', this.RunScript.Bind(this))
+        ui.AddText('xm y+30',  'Saved scripts:')
+        ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadValue'))
         
-        ui.AddText('xm y+10',   'Script or file path:')
-        this.scripts.edit := ui.AddEdit('xm w620')
+        ui.Label(,  'xm w620', 'Script or file path:', r(this.scripts, 'edit'))
+        ui.Button(,            'Browse', ,  f('BrowsePath'))
         
-        ui.Button(,             'Browse',   this.BrowsePath.Bind(this))
-
-        ui.AddText('xm y+10',   'Separator:')
-        this.sep := ui.AddEdit('x+m yp-4 w30 Limit1', Vars['scriptsSep'])
-        ui.Button('yp-2 w40',   'Set',      this.SetSeparator.Bind(this))
+        ui.Label(,'yp-4 Limit1','Separator:',          r(this, 'sep'))
+        this.sep.value := Vars['scriptsSep']
         
-        ui.Button('xm y+10',    'Add',      this.AddScript.Bind(this))
-        ui.Button(,             'Load',     this.LoadScript.Bind(this))
-
-        ui.Button(,             'Remove',   this.RemoveScript.Bind(this))
-        ui.Button(,             'Run',      this.RunScript.Bind(this))
-        ui.Button(,             'Close',    this.CloseScript.Bind(this))
-                                            
-        ui.Button(,             'Refresh',  this.Refresh.Bind(this))
-        ui.Button(,             'Save',     WriteAll)
+        ui.Button('yp-2 w40',   'Set', ,    f('SetSeparator'))
         
-        this.status := ui.AddText('xm y+10 w760')
+        this.scripts.buttons := {}
+        ui.Button(new, 'Add',     r(this.scripts.buttons, 'add'),     f('AddScript'))
+        ui.Button(,    'Load',    r(this.scripts.buttons, 'load'),    f('LoadScript'))
+                                                               
+        ui.Button(,    'Remove',  r(this.scripts.buttons, 'remove'),  f('RemoveScript'))
+        ui.Button(,    'Run',     r(this.scripts.buttons, 'run'),     f('RunScript'))
+        ui.Button(,    'Close',   r(this.scripts.buttons, 'close'),   f('CloseScript'))
+                                                               
+        ui.Button(,    'Refresh', r(this.scripts.buttons, 'refresh'), f('Refresh'))
+        ui.Button(,    'Save', ,  WriteAll)
+        
+        this.status := ui.AddText(new ' w760')
         
         this.Refresh()
         ui.Show()
@@ -267,5 +285,34 @@ class ScriptManager {
         }
         
         Vars['scriptsSep'] := this.sep.value
+    }
+    
+    ; Meta-methods to add syntax sugar
+    ; and improve code readability
+    _Ref(base, name) {
+        try {
+            desc := base.GetOwnPropDesc(name)
+        } catch {
+            base.%name% := ''
+        }
+        
+        desc := base.GetOwnPropDesc(name)
+        if desc.HasProp('value')
+            base.DefineProp(name, make_ref(desc))
+            
+        return desc.get.ref
+        
+        make_ref(desc) {
+            v := desc.DeleteProp('value')
+            desc.get := (this)        => v
+            desc.set := (this, value) => v := value
+            desc.get.ref := &v  ; Attach the VarRef to the property getter.
+            
+            return desc
+        }
+    }
+    
+    _Fn(name) {
+        return GetMethod(this, name).Bind(this)
     }
 }
