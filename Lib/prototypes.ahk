@@ -9,10 +9,26 @@ MapToString(m) {
 
 MapWrite(pairsMap, section := 'variables') {
     for var, value in pairsMap {
-        if (value = '' || value = 'unset')
+        switch value, false {
+        case 'running':
+            ; External state, must be ignored
+            continue
+        case 'unset':
+            ; Internal state, marked for deletion
             IniDelete(INI, section, var)
-        else
+        default:
             IniWrite(value, INI, section, var)
+        }
+    }
+}
+
+MapRead(pairsMap, section := 'variables') {
+    if !FileExist(INI)
+        return
+
+    loop parse IniRead(INI, section), '`n' {
+        pair := StrSplit(A_LoopField, '=')
+        pairsMap.Set(pair[1], pair[2])
     }
 }
 
@@ -53,5 +69,6 @@ MapToGrid(m, columns := ['key', 'value']) {
 
 Map.prototype.DefineProp('Clean',    {call: MapClean})
 Map.prototype.DefineProp('Write',    {call: MapWrite})
+Map.prototype.DefineProp('Read',     {call: MapRead})
 Map.prototype.DefineProp('ToString', {call: MapToString})
 Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
