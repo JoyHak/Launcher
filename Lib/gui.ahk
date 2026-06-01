@@ -23,7 +23,7 @@ class Settings extends GUI {
     
     List(options := '', columns := [], &var := '', callback := (*) => 0) {
         return this
-          .AddListView('xm Grid -Multi ' options, columns)
+          .AddListView('xm Grid ' options, columns)
           .Assign(&var)
           .OnEvent('Click', callback)
     }
@@ -59,7 +59,7 @@ class ScriptManager {
         
         this.vars.btns := {}
         ui.Button(new,         'Add',                  r(this.vars.btns, 'add'),     f('AddVariable'))
-        ui.Button(,            'Remove',               r(this.vars.btns, 'remove'),  f('RemoveVariable'))
+        ui.Button(,            'Remove',               r(this.vars.btns, 'remove'),  f('RemoveVariables'))
         
         ui.AddText('xm y+30',  'Saved scripts:')
         ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadValue'))
@@ -76,9 +76,9 @@ class ScriptManager {
         ui.Button(new, 'Add',     r(this.scripts.btns, 'add'),     f('AddScript'))
         ui.Button(,    'Load',    r(this.scripts.btns, 'load'),    f('LoadScript'))
                                                                
-        ui.Button(,    'Remove',  r(this.scripts.btns, 'remove'),  f('RemoveScript'))
-        ui.Button(,    'Run',     r(this.scripts.btns, 'run'),     f('RunScript'))
-        ui.Button(,    'Close',   r(this.scripts.btns, 'close'),   f('CloseScript'))
+        ui.Button(,    'Remove',  r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
+        ui.Button(,    'Run',     r(this.scripts.btns, 'run'),     f('RunScripts'))
+        ui.Button(,    'Close',   r(this.scripts.btns, 'close'),   f('CloseScripts'))
                                                                
         ui.Button(,    'Refresh', r(this.scripts.btns, 'refresh'), f('Refresh'))
         ui.Button(,    'Save', ,  WriteAll)
@@ -159,25 +159,31 @@ class ScriptManager {
         this.RefreshScripts()
     }
 
-    GetSelected(listView) {
-        row := listView.GetNext()
-        if !row
-            row := listView.GetNext(, 'Focused')
+    GetSelected(listView, column := 1) {
+        rows := []
+        row  := lastRow := 0
         
-        if !row {
-            this.status.text := 'Nothing selected'
-            return ''
+        loop {
+            if !(row := listView.GetNext(lastRow))
+                 row := listView.GetNext(lastRow, 'Focused')
+            
+            if (row = 0)
+                break
+                
+            lastRow := row 
+            rows.Push(listView.GetText(row, column))
         }
         
-        return listView.GetText(row, 1)
+        if !rows.length
+            this.status.text := 'Nothing selected'
+        
+        return rows
     }
     
     GetValue(listView) {
-        value := Trim(listView.edit.value, ' `t`r`n`"`'')
-        if !value {
+        value := listView.edit.value.Normalize()
+        if !value
             this.status.text := 'Value is empty'
-            return ''
-        } 
         
         return value
     }
@@ -202,55 +208,67 @@ class ScriptManager {
         try listView.btns.remove.enabled := true
     }
 
-    RunScript(*) {
-        if !(script := this.GetSelected(this.scripts))
-            return
-        
-        if !Scripts.Has(script) {
-            this.status.text := 'Cannot run non-existing script'
-            return
-        }
-        
-        RunScripts(Map(script, Scripts[script]))
-        SetTimer(this.RefreshScripts.Bind(this), -2000)
-    }
-
-    CloseScript(*) {
-        if !(script := this.GetSelected(this.scripts))
-            return
-        
-        if !Scripts.Has(script) {
-            this.status.text := 'Cannot close non-existing script'
-            return
-        }
-        
-        CloseScripts(Map(script, Scripts[script]))
-        SetTimer(this.RefreshScripts.Bind(this), -2000)
-    }
-        
-    RemoveVariable(*) {
-        if !(name := this.GetSelected(this.vars))
-            return
+    RunScripts(*) {
+        _scripts := Map()
+        for script in this.GetSelected(this.scripts) {            
+            if !Scripts.Has(script) {
+                Warning('Cannot run non-existing script "' script '"')
+                continue
+            }
             
-        if !Vars.Has(name) {
-            this.status.text := 'Cannot remove non-existing variable'
+            _scripts.Set(script, Scripts[script])
+        } else {
+            return
+        }
+        
+        RunScripts(_scripts)
+        SetTimer(this.RefreshScripts.Bind(this), -2000)
+    }
+
+    CloseScripts(*) {
+        _scripts := Map()
+        for script in this.GetSelected(this.scripts) {            
+            if !Scripts.Has(script) {
+                Warning('Cannot close non-existing script "' script '"')
+                continue
+            }
+            
+            _scripts.Set(script, Scripts[script])
+        } else {
+            return
+        }
+        
+        CloseScripts(_scripts)
+        SetTimer(this.RefreshScripts.Bind(this), -2000)
+    }
+        
+    RemoveVariables(*) {
+        for name in this.GetSelected(this.vars) {            
+            if !Vars.Has(name) {
+                Warning('Cannot remove non-existing variable "' name '"')
+                continue
+            }
+            
+            Vars.Set(name, 'unset')
+        } else {
             return
         }
 
-        Vars.Set(name, 'unset')
         this.RefreshVars()
     }
 
-    RemoveScript(*) {
-        if !(script := this.GetSelected(this.scripts))
-            return
-
-        if !Scripts.Has(script) {
-            this.status.text := 'Cannot remove non-existing script'
+    RemoveScripts(*) {
+        for script in this.GetSelected(this.scripts) {            
+            if !Scripts.Has(script) {
+                Warning('Cannot remove non-existing script "' script '"')
+                continue
+            }
+            
+            Scripts.Set(script, 'unset')
+        } else {
             return
         }
 
-        Scripts.Set(script, 'unset')
         this.RefreshScripts()
     }
     
@@ -258,7 +276,7 @@ class ScriptManager {
         if !(name := this.GetValue(this.vars))
             return
         
-        value := Trim(this.vars.content.value, ' `t`r`n`"`'')
+        value := this.vars.content.value.Normalize()
         if (value = '' || value = 'unset') {
             if Vars.Has(name)
                 Vars[name] := 'unset'
@@ -277,16 +295,15 @@ class ScriptManager {
         
         path := ExpandVariables(path)
 
-        if (SubStr(path, 1, 1) = '@') {
-            path := SubStr(path, 2)  ; omit @
+        if (path.Slice(1, 1) = '@') {
+            path := path.Slice(2)  ; omit @
             _scripts := ParseFile(path, Vars['scriptsSep'])
         } else {
             _scripts := ParseScripts(path, Vars['scriptsSep'])
         }
             
-        for script, state in _scripts {
+        for script, state in _scripts
             Scripts.Set(script, state)
-        }
 
         this.RefreshScripts()
     }
