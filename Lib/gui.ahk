@@ -44,7 +44,6 @@ class ScriptManager {
         r(base, name) => this._Ref(base, name)
         new := 'xm y+10'
         
-        ; todo: add buttons "disable", "clear"
         ; todo: warning icons
         ui := Settings(, 'Script manager')
         ui.SetFont('q5 s11', 'Maple Mono NF CN')
@@ -52,7 +51,7 @@ class ScriptManager {
         ui.OnEvent('Escape',  WriteAndExit)
         
         ui.AddText(new,        'Defined variables:')
-        ui.List('w800 r4',    ['Name', 'Value'],       r(this, 'vars'),     f('LoadValue'))
+        ui.List('w800 r4',    ['Name', 'Value'],       r(this, 'vars'),     f('LoadVarValue'))
                                                        
         ui.Label(          , 'yp-4 w100', 'Name:',     r(this.vars, 'edit'))
         ui.Label('x+m yp+4', 'yp-4 w550', 'Value:',    r(this.vars, 'content'))
@@ -62,7 +61,7 @@ class ScriptManager {
         ui.Button(,            'Remove',               r(this.vars.btns, 'remove'),  f('RemoveVariables'))
         
         ui.AddText('xm y+30',  'Saved scripts:')
-        ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadValue'))
+        ui.List('w800 r10',   ['Path', 'State'],       r(this, 'scripts'),  f('LoadScriptValue'))
         
         ui.Label(,new ' w700', 'Script or file path:', r(this.scripts, 'edit'))
         ui.Button(,            'Browse', ,  f('BrowsePath'))
@@ -77,12 +76,14 @@ class ScriptManager {
         ui.Button(,    'Load',      r(this.scripts.btns, 'load'),    f('LoadScript'))
                                                                  
         ui.Button(,    'Remove',    r(this.scripts.btns, 'remove'),  f('RemoveScripts'))
+        ui.Button(,    'Disable',   r(this.scripts.btns, 'disable'), f('DisableScripts'))
         ui.Button(,    'Run',       r(this.scripts.btns, 'run'),     f('RunScripts'))
         ui.Button(,    'Close',     r(this.scripts.btns, 'close'),   f('CloseScripts'))
                                                                  
         ui.Button(,    'Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
         ui.Button(,    'Save', ,    WriteAll)
         ui.Button(,    'Restore',,  (*) => (RestoreAll(), this.Refresh()))
+        ui.Button('x+50 w30','?',,  ShowHelpMessage)
         
         this.status := ui.AddText(new ' w760')
         
@@ -189,24 +190,39 @@ class ScriptManager {
         return value
     }
     
-    LoadValue(listView, row) {  
+    LoadVarValue(l, row) {  
+        if (row = 0)
+            return
+
+        l.edit.value    := l.GetText(row, 1)
+        l.content.value := l.GetText(row, 2)  
+
+        l.btns.remove.enabled := true
+    }
+    
+    LoadScriptValue(l, row) {  
         if (row = 0)
             return
          
-        key   := listView.GetText(row, 1)
-        value := listView.GetText(row, 2)  
-        try listView.edit.value    := key
-        try listView.content.value := value
+        path  := l.GetText(row, 1)
+        state := l.GetText(row, 2)  
+        l.edit.value  := path
         
-        if (value = 'disabled') {
-            try listView.btns.run.Color().enabled := false
-            try listView.btns.close.Color().enabled := false
+        if (state = 'disabled') {
+            l.btns.add.Color(this.colors['enabled']).text := 'Enable'
+            
+            l.btns.run.Color().enabled      := false
+            l.btns.close.Color().enabled    := false
+            l.btns.disable.Color().enabled  := false
         } else {
-            try listView.btns.run.Color(this.colors['running']).enabled := true
-            try listView.btns.close.Color(this.colors['disabled']).enabled := true
+            l.btns.add.Color().text := 'Add'
+            
+            l.btns.run.Color(this.colors['running']).enabled := true
+            l.btns.close.Color(this.colors['disabled']).enabled := true
+            l.btns.disable.Color().enabled := true
         }
         
-        try listView.btns.remove.enabled := true
+        l.btns.remove.enabled := true
     }
 
     RunScripts(*) {
@@ -266,6 +282,21 @@ class ScriptManager {
             }
             
             Scripts.Set(script, 'unset')
+        } else {
+            return
+        }
+
+        this.RefreshScripts()
+    }
+    
+    DisableScripts(*) {
+        for script in this.GetSelected(this.scripts) {            
+            if !Scripts.Has(script) {
+                Warning('Cannot disable non-existing script "' script '"')
+                continue
+            }
+            
+            Scripts.Set(script, 'disabled')
         } else {
             return
         }
