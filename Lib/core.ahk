@@ -16,7 +16,7 @@ RunScripts(scriptsMap, *) {
     errors := ''
     for script, state in scriptsMap {
         if (state = 'enabled') {
-            Run(script,, 'hide')
+            Run(script)
             Verbose('Run "' script '"')
         } else {
             Warning('Cannot run disabled "' script '"')
@@ -30,10 +30,6 @@ CloseScripts(scriptsMap, *) {
 
     errors := ''
     for script, state in scriptsMap {
-        if (state != 'running') {
-            Warning('"' script '" already closed')
-            continue
-        }
         if !RunWait('taskkill /fi "WINDOWTITLE eq ' script '*',, 'hide')
             Verbose('Close "' script '"')
         else
