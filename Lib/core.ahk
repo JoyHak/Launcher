@@ -19,7 +19,7 @@ RunScripts(scriptsMap, *) {
             Run(script)
             Verbose('Run "' script '"')
         } else {
-            Warning('Cannot run disabled "' script '"')
+            Verbose('Cannot run disabled "' script '"')
         }
     }
 }

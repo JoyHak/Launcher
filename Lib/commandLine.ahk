@@ -43,7 +43,7 @@ ParseFile(path, separator := ';', state := 'enabled') {
 }
 
 ParseCommandLine() {
-    AttachOutput()
+    global IsConsole := AttachOutput()
 
     ParseArgs:
     for args in A_Args {

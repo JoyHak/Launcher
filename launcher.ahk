@@ -142,6 +142,8 @@ try TraySetIcon('Icons\clock.ico')
 
 INI       := 'launcher.ini'
 IsVerbose := false
+IsConsole := false
+; IsConsole := DllCall('AllocConsole')
 Scripts   := Map()
 Vars      := Map('scriptsSep', ';')
 
