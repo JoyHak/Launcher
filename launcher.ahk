@@ -52,10 +52,10 @@ ShowHelpMessage(*) {
                    
       -restore         restore all data from the drive.
                        <gray>If -save was passed, restores previous version. 
-                       Otherwise, it updates the data in memory from disk.</gray>
+                       Otherwise updates the data in memory from disk.</gray>
       
       -verbose         show additional messages
-      <gray>-h, -?           show this help message</gray>
+      -help, -h, -?    show this help message
       
     Pass one or more scripts, separated by <green>;</green>
       launcher --run=quickswitch<green>;</green>radify
