@@ -63,6 +63,10 @@ ShowHelpMessage(*) {
     Separator can be changed:
       launcher --sep=<green>^</green> --run=quickswitch<green>^</green>radify
       launcher --run=arrows<green>^</green>chars  separator is saved
+      
+      Special batch/powershell symbols can be escaped via quotes:
+      launcher --sep=<green>`'|`'</green>
+      launcher --sep=<green>`"|`"</green>
 
     You can specify full path or filename only:
       launcher --run=quickswitch
