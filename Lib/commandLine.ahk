@@ -126,7 +126,7 @@ ParseCommandLine() {
         case '-restore': 
             RestoreAll()
             
-        case '-h', '-?':
+        case '-help', '-h', '-?':
             ShowHelpMessage()    
         case '--sep':
             Vars['scriptsSep'] := GetValue() 
