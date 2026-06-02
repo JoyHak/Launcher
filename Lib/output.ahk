@@ -7,18 +7,24 @@ GetOutputHandle() {
 }
 
 FreeOutput(*) {
-    hConsole := DllCall('GetConsoleWindow')
+    if !(hConsole := DllCall('GetConsoleWindow'))
+        return false
+        
     ControlSend('{Enter}', , 'ahk_id ' hConsole)
     
-    DllCall('FreeConsole')
+    return DllCall('FreeConsole')
 }
 
 AttachOutput() {
     DllCall('FreeConsole')
-    DllCall('AttachConsole', 'int', -1)
+    
+    if !DllCall('AttachConsole', 'int', -1)
+        return false
     
     OnExit(FreeOutput)
     OnError(Exception)
+    
+    return true
 }
 
 Output(text, color := 'white') {
@@ -69,12 +75,11 @@ Output(text, color := 'white') {
 }
 
 Message(msg, icon := '', normalColor := 'white') {
-    try {
-        Output(msg '`n', normalColor)
-    } catch {    
-        msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
-        MsgBox(msg, A_ScriptName, icon)
-    }
+    if IsConsole
+        return Output(msg '`n', normalColor)
+
+    msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
+    return MsgBox(msg, A_ScriptName, icon)
 }
 
 Verbose(msg) {
