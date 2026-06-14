@@ -10,12 +10,8 @@
     <li>Use AutoHotkey built-in and environment variables</li>
 </ul>
 
-![](images/Dual_UI.png)
-![](images/frame_fast.gif)
-
-<p>With Launcher, you can streamline your workflow by managing all your automation scripts from a single command-line interface.</p>
-
-<hr>
+![](/Images/Dual_UI.png)
+![](/Images/frame_fast.gif)
 
 ## Quick Start
 
@@ -29,8 +25,7 @@ launcher -scripts
 > `launcher.ahk` supports GUI mode only.
 
 `launcher -scripts` and `launcher.ahk` displays the same scripts. You can manage them from terminal and GUI simultaneously!
-![](images/frame_rainbow.gif)
-
+![](/Images/frame_rainbow.gif)
 
 ## Usage Syntax
 
@@ -199,33 +194,27 @@ Parameters perform specific actions on your scripts.
     </tbody>
 </table>
 
-```fsharp
-launcher --add=script1 --add=script2 -save
-launcher -restore -verbose
-```
-
 ### Script Management
-
 #### Adding Scripts
-
 ```fsharp
 launcher --add=quickswitch.ahk
 launcher --add=C:\Ahk\radify.ahk
 ```
 
 In GUI you can specify path to the script in the input field and click `Add` at the bottom:
-![](Images/frame_fast.gif)
+![](/Images/frame_fast.gif)
 
+You can insert an absolute path *(C:\AutoHotkey\QuickSwitch)*, a path relative to the current working dir *(QuickSwitch)* or just filename *(script.ahk)*.
 
 #### Enabling/Disabling Scripts
-
 ```fsharp
 launcher --enable=quickswitch
 launcher --disable=radify
 ```
+In GUI use buttons at the bottom to manage scripts:
+![](/Images/frame_rainbow.gif)
 
 #### Running Scripts
-
 By filename:
 ```fsharp
 launcher --run=quickswitch
@@ -251,9 +240,11 @@ launcher --remove=script1;script2;script3
 launcher -scripts
 launcher -scripts -verbose
 ```
+Terminal switch `-scripts` and Graphical List View displays the same information, which means you can use both TUI and GUI to query required information.
+![](/Images/TUI_scrips.png)
+![](/Images/GUI_scripts.png)
 
 ### Custom Separators
-
 By default, multiple scripts are separated by semicolon `;`
 ```fsharp
 launcher --run=quickswitch;radify;arrows
@@ -268,6 +259,7 @@ launcher --run=script1^script2
 launcher --run=script3^script4
 ```
 
+#### Escaped values
 For batch/PowerShell special characters, use quotes to escape them:</p>
 ```fsharp
 launcher --sep='|'
@@ -309,21 +301,34 @@ launcher --run="@C:\Temp files\My scripts"
 `@file` can be passed to *any* [parameter](#parameters). Use it to organize your scripts into logical groups and version control them easily.
 
 ## Variables
-Save and reuse custom variables that persist across sessions.
-
-<pre>launcher mainDir=C:\Scripts\DarkGui
+Save and reuse custom variables that persist across sessions. For any [parameter](#parameters) or GUI input field you can pass a path that contains [environment variables](https://learn.microsoft.com/en-us/windows/deployment/usmt/usmt-recognized-environment-variables); built-in [AutoHotkey variables](https://www.autohotkey.com/docs/v2/Variables.htm#BuiltIn) or manually defined variables *(see below)*. Enclose the variables in percent signs `%`
+```fsharp
+launcher --run=<span class="blue">%A_Temp%</span>\DarkTheme.ahk
+launcher --add=<span class="blue">%TEMP%</span>\scripts.ini
+```
+#### Define Variables
+To define a new variable with *any* value, simply write `name=value` without any prefix like `--` or `@`
+```fsharp
+launcher mainDir=C:\Scripts\DarkGui
 launcher projectPath=C:\MyProject
-launcher tempScript=%A_Temp%\temp.ahk</pre>
+```
+Values with spaces must be [escaped with quotes](#escaped-values):
+```fsharp
+launcher mainDir="C:\My Scripts\Dark Gui"
+launcher projectPath='C:\Temp Scripts'
 
-<h3>Using Variables</h3>
+launcher --run=%mainDir%\DarkTheme.ahk
+launcher --add=@'%projectPath%\scripts.ini'
+```
 
-<pre>launcher --run=<span class="blue">%mainDir%</span>\DarkTheme.ahk
-launcher --add=<span class="blue">%projectPath%</span>\scripts.ini</pre>
+#### Variables in Variables
+New variable can hold literals and other [variables](#variables), including env. vars:
+```fsharp
+launcher mainDir=%A_ScriptDir%\DarkGui
+launcher projectPath=%A_Temp%\myproject
+launcher projectPath=%AppData%\Data
+```
 
-<h3>Variables in Variables</h3>
-
-<pre>launcher mainDir=<span class="blue">%A_ScriptDir%</span>\DarkGui
-launcher projectPath=<span class="blue">%A_Temp%</span>\myproject</pre>
 
 <h3>Modifying Variables On The Fly</h3>
 
@@ -544,6 +549,12 @@ launcher pd=C:\MyProject           ← Poor</pre>
 #### Disk Usage
 
 Each parameter can modify some internal data: variables, scripts paths, etc. Data is normally written to disk **after all parameters are processed** to reduce disk I/O operations. Use `-save` if you need to save data immediately:
+```fsharp
+launcher --add=script1 --add=script2 -save
+launcher -restore -verbose
+```
 
-</body>
-</html>
+## Debugging
+If something doesn't working as expexted, please [report about it](https://github.com/JoyHak/Launcher/issues/new?template=bug-report.yaml). You can pass `-verbose` swith to each command to get additional information.
+![](/Images/TUI2.png)
+If you're using terminal, attach this information to report please. In GUI mode use *ShareX* or *IceCream screen recorder* to record a video/gif with unexpected behavior.
