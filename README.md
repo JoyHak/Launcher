@@ -1,14 +1,11 @@
-<p>Launcher is a powerful utility that support Terminal UI and Graphical UI and allows you to:</p>
-
-<ul>
-    <li>Save and organize multiple scripts and applications</li>
-    <li>Enable or disable scripts on demand</li>
-    <li>Run scripts and applications using GUI or terminal</li>
-    <li>Run everything silently on system startup</li>
-    <li>Run multiple scripts simultaneously or sequentially</li>
-    <li>Load multiple scripts from external file</li>
-    <li>Use AutoHotkey built-in and environment variables</li>
-</ul>
+Launches and Manages scripts and applications. Supports Terminal UI and Graphical UI and allows you to:
+- Save and organize multiple scripts and applications
+- Enable or disable scripts on demand
+- Run scripts and applications using GUI or terminal
+- Run everything silently on system startup
+- Run multiple scripts simultaneously or sequentially
+- Load multiple scripts from external file
+- Use AutoHotkey built-in and environment variables
 
 ![](/Images/Dual_UI.png)
 ![](/Images/frame_fast.gif)
