@@ -223,6 +223,12 @@ By full path:
 ```fsharp
 launcher --run=C:\Ahk\quickswitch.ahk
 ```
+You can run all scripts at once:
+```fsharp
+launcher -autorun
+```
+> [!tip]
+> This switch runs all scripts and applications silently. You can create shortcut in `%AppData%\Microsoft\Windows\Start Menu\Programs\Startup` with this switch: `"path\to\launcher.exe" -autorun`.
 
 #### Closing Scripts</h3>
 ```fsharp
@@ -234,7 +240,10 @@ launcher -autoclose
 ```fsharp
 launcher --remove=quickswitch
 launcher --remove=script1;script2;script3
+
+launcher -scripts-clear
 ```
+
 #### Viewing Saved Scripts
 ```fsharp
 launcher -scripts
@@ -258,9 +267,11 @@ Separator is saved:
 launcher --run=script1^script2
 launcher --run=script3^script4
 ```
+Separator can be changed in GUI. You can use it in the input field.
+<img width="568" height="354" alt="separator" src="https://github.com/user-attachments/assets/9de6bc50-d21e-4df0-9544-61458d458690" />
 
 #### Escaped values
-For batch/PowerShell special characters, use quotes to escape them:</p>
+For batch/PowerShell special characters, use quotes to escape them:
 ```fsharp
 launcher --sep='|'
 launcher --sep"|"
@@ -274,19 +285,26 @@ launcher --sep='&'
 > ```
 
 ### File References
-
-Load multiple scripts from external files using the `@file`, where file can be any path:
+Load multiple scripts from external files using the `@file`, where *file* can be any path with `@` prefix:
 ```fsharp
 launcher --add=@list.in
 launcher --remove=@list.ini
 launcher --run=@scripts.ini
 ```
-And `list.ini` lists file paths:
+`list.ini` simply lists file paths:
 ```
 AutoHotKey\MarkdownToBBCode\MarkdownToBBCode.exe
 AutoHotKey\ChangeLogSorter\ChangeLogSorter-1.0.ahk
 AutoHotKey\QuickSwitch\QuickSwitch.ahk
 ```
+Paths can be on individual lines or on asingle line:
+```
+AutoHotKey\MarkdownToBBCode\MarkdownToBBCode.exe;AutoHotKey\ChangeLogSorter\ChangeLogSorter-1.0.ahk
+AutoHotKey\QuickSwitch\QuickSwitch.ahk
+```
+`;` separator [can be changed](#custom-separators).
+![](/Images/load_script.gif)
+
 You can pass simple filename relative to current working directory:
 ```fsharp
 launcher --add=@list.ini
@@ -303,9 +321,10 @@ launcher --run="@C:\Temp files\My scripts"
 ## Variables
 Save and reuse custom variables that persist across sessions. For any [parameter](#parameters) or GUI input field you can pass a path that contains [environment variables](https://learn.microsoft.com/en-us/windows/deployment/usmt/usmt-recognized-environment-variables); built-in [AutoHotkey variables](https://www.autohotkey.com/docs/v2/Variables.htm#BuiltIn) or manually defined variables *(see below)*. Enclose the variables in percent signs `%`
 ```fsharp
-launcher --run=<span class="blue">%A_Temp%</span>\DarkTheme.ahk
-launcher --add=<span class="blue">%TEMP%</span>\scripts.ini
+launcher --run=%A_Temp%\DarkTheme.ahk
+launcher --add=%TEMP%\scripts.ini
 ```
+
 #### Define Variables
 To define a new variable with *any* value, simply write `name=value` without any prefix like `--` or `@`
 ```fsharp
@@ -326,233 +345,108 @@ New variable can hold literals and other [variables](#variables), including env.
 ```fsharp
 launcher mainDir=%A_ScriptDir%\DarkGui
 launcher projectPath=%A_Temp%\myproject
-launcher projectPath=%AppData%\Data
+launcher dataPath=%AppData%\Data
+
+launcher --run=%mainDir%\DarkTheme.ahk
+launcher --add=%projectPath%\project.ahk --add=@%dataPath%\data.ini
+
+```
+
+#### Modify On The Fly
+Change variable values within a single command to control different execution paths:
+```fsharp
+launcher AhkDir=C:\Ahk --run=%AhkDir%\quickswitch AhkDir=C:\Scripts --run=%AhkDir%\radify
+```
+First part runs script from `C:\Ahk`, second part runs script from `C:\Scripts`. In the end `AhkDir` variable holds last path, i.e.  `C:\Scripts`. So you can reuse it later.
+
+#### Removing Variables
+Pass empty value or `unset` to remove existing variable:
+```fsharp
+launcher mainDir=
+launcher mainDir=unset
+```
+Non-existing variable cannot be initialized with empty value!
+
+You can remove all variables:
+```fsharp
+launcher -vars-clear
 ```
 
 
-<h3>Modifying Variables On The Fly</h3>
+#### Variables in Paths
+Variables can be passed to *any* [parameter](#parameters) and [file list](#file-references) *(@file)*
+```fsharp
+launcher listfile=C:\config\scripts.ini --add=@%listfile%
+launcher --run=%A_ScriptFullPath%
 
-<p>Change variable values within a single command to control different execution paths:</p>
+launcher projectPath=C:\Long Long Path
+launcher --add=@'%projectPath%\My Scripts\scripts.ini'
+```
 
-<pre>launcher AhkDir=C:\Ahk <span class="green">--run</span>=<span class="blue">%AhkDir%</span>\quickswitch AhkDir=C:\Scripts <span class="green">--run</span>=<span class="blue">%AhkDir%</span>\radify</pre>
-
-<div class="info">
-    <strong>ℹ️ How it works:</strong> First part runs with <code class="blue">%AhkDir%</code> = <code>C:\Ahk</code>, second part with <code class="blue">%AhkDir%</code> = <code>C:\Scripts</code>
-</div>
-
-<h3>Removing Variables</h3>
-
-<div class="success">
-    <strong>✓ Method 1 - Empty value:</strong>
-    <pre>launcher mainDir=</pre>
-</div>
-
-<div class="success">
-    <strong>✓ Method 2 - Unset keyword:</strong>
-    <pre>launcher mainDir=<span class="magenta">unset</span></pre>
-</div>
-
-
-
-<div class="success">
-    <strong>✓ Path with variables:</strong>
-    <pre>launcher listfile=C:\config\scripts.ini --add=<span class="yellow">@%listfile%</span></pre>
-</div>
-
-<h3>File Format</h3>
-
-<p>Files can contain scripts, variables, and AutoHotkey variables separated by your chosen separator (default: <span class="green">;</span>):</p>
-
-<pre>C:\s1.ahk<span class="green">;</span>C:\s2.ahk
+#### Variables in List
+[File list](#file-references) *(@file)* can contain scripts, variables, and AutoHotkey variables separated by your chosen separator:
+```
+C:\s1.ahk;C:\s2.ahk
 C:\%A_Temp%\s3.ahk
 C:\%myvar%\s4.ahk
-%A_ScriptDir%\local.ahk</pre>
+%A_ScriptDir%\local.ahk
+```
+Newline "`n" serves as separator too, so you can group scripts on individual lines:
+```
+C:\s1.ahk;C:\s2.ahk
+C:\%A_Temp%\s1.ahk;C:\%A_Temp%\s2.ahk
+```
 
+## Examples
+#### GUI
+![](/Images/frames)
+![](/Images/vars_expand)
 
-<h3>Viewing Variables</h3>
-
-<pre>launcher -vars
-launcher -vars -verbose</pre>
-
-<h3>Clearing All Variables</h3>
-
-<pre>launcher -vars-clear</pre>
-
-<h3>AutoHotkey Built-in Variables</h3>
-
-<p>Use AutoHotkey's built-in variables and environment variables directly:</p>
-
-<table>
-    <thead>
-        <tr>
-            <th>Variable</th>
-            <th>Description</th>
-            <th>Example</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><span class="blue">%A_ScriptFullPath%</span></td>
-            <td>Full path to the current script</td>
-            <td><code>launcher --run=<span class="blue">%A_ScriptFullPath%</span></code></td>
-        </tr>
-        <tr>
-            <td><span class="blue">%A_ScriptDir%</span></td>
-            <td>Directory of the current script</td>
-            <td><code>launcher --add=<span class="blue">%A_ScriptDir%</span>\tools</code></td>
-        </tr>
-        <tr>
-            <td><span class="blue">%A_Temp%</span></td>
-            <td>AutoHotkey temporary directory</td>
-            <td><code>launcher --run=<span class="blue">%A_Temp%</span>\script.ahk</code></td>
-        </tr>
-        <tr>
-            <td><span class="blue">%TEMP%</span></td>
-            <td>System temporary directory</td>
-            <td><code>launcher --close=<span class="blue">%TEMP%</span>\junk.ahk</code></td>
-        </tr>
-        <tr>
-            <td><span class="blue">%ConEmuDir%</span></td>
-            <td>ConEmu directory (if installed)</td>
-            <td><code>launcher --add=<span class="blue">%ConEmuDir%</span>\update.py</code></td>
-        </tr>
-        <tr>
-            <td><span class="blue">%USERPROFILE%</span></td>
-            <td>User home directory</td>
-            <td><code>launcher --run=<span class="blue">%USERPROFILE%</span>\scripts</code></td>
-        </tr>
-    </tbody>
-</table>
-
-<h3>Variables in @file</h3>
-
-<p>Variables work in external @file references too:</p>
-
-<pre>C:\<span class="blue">%A_Temp%</span>\script.ahk
-C:\<span class="blue">%myvar%</span>\important.ahk
-<span class="blue">%projectDir%</span>\local\app.exe</pre>
-
-<pre>launcher --add=<span class="yellow">@scripts.ini</span></pre>
-
-<div class="note">
-    <strong>💾 Remember:</strong> Custom variables are automatically saved and persist across sessions. To see all saved variables, use <code>launcher -vars</code>
-</div>
-
-<hr>
-
-<h2 id="examples">🎯 Real-World Examples</h2>
-
-<h3>Example 1: Basic Workflow</h3>
-
-<pre>launcher --add=quickswitch.ahk
+#### Command line
+Basic workflow:
+```fsharp
+launcher --add=quickswitch.ahk
 launcher --enable=quickswitch
-launcher --run=quickswitch</pre>
-
-<h3>Example 2: Multiple Scripts</h3>
-
-<pre>launcher --add=script1.ahk --add=script2.ahk --add=script3.ahk
-launcher --run=script1.ahk;script2.ahk;script3.ahk</pre>
-
-<h3>Example 3: Project Setup with Variables</h3>
-
-<pre>launcher projectDir=C:\MyProject
+launcher --run=quickswitch
+```
+Multiple scripts:
+```fsharp
+launcher --add=script1.ahk --add=script2.ahk --add=script3.ahk
+launcher --run=script1.ahk;script2.ahk;script3.ahk
+```
+Project setup with variables:
+```fsharp
+launcher projectDir=C:\MyProject
 launcher scriptsFile=%projectDir%\scripts.ini
 launcher --add=@%scriptsFile%
 launcher --enable
-launcher -autorun</pre>
-
-<h3>Example 4: Development vs Production</h3>
-
-<pre>launcher env=dev --run=<span class="blue">%env%</span>\test.ahk env=prod --run=<span class="blue">%env%</span>\deploy.ahk</pre>
-
-<h3>Example 5: Custom Separator for Complex Operations</h3>
-
-<pre>launcher --sep=| --run=cleanup|optimize|backup|report</pre>
-
-<h3>Example 6: Load from External File</h3>
-
-<pre>launcher --add=@'C:\Scripts\utilities.ini'
+launcher -autorun
+```
+Development and Production:
+```fsharp
+launcher env=dev --run=%env%\test.ahk env=release --run=%env%\public.ahk
+```
+Custom separator for readable scripts list:
+```fsharp
+launcher --sep=| --run=cleanup|optimize|backup|report
+```
+Load from external file:
+```fsharp
+launcher --add=@'C:\Scripts\utilities.ini'
 launcher --enable
-launcher -autorun -verbose</pre>
+launcher -autorun -verbose
 
-<h3>Example 7: Safe Cleanup</h3>
+launcher -autoclose -save -vars-clear
+```
 
-<pre>launcher -autoclose -save -vars-clear</pre>
-
-<h3>Example 8: Conditional Execution with Order</h3>
-
-<pre>launcher -autoclose --add=@list.ini --enable -autorun</pre>
-
-<hr>
-
-<h2 id="best-practices">✅ Best Practices</h2>
-
-<div class="success">
-    <strong>✓ Use descriptive variable names</strong>
-    <pre>launcher projectDir=C:\MyProject  ← Good
-launcher pd=C:\MyProject           ← Poor</pre>
-</div>
-
-<div class="success">
-    <strong>✓ Organize scripts in @file</strong>
-    <p>Group related scripts in external files for easy version control and management.</p>
-</div>
-
-<div class="success">
-    <strong>✓ Test with -verbose</strong>
-    <pre>launcher -verbose --run=script.ahk</pre>
-</div>
-
-<div class="success">
-    <strong>✓ Understand execution order</strong>
-    <p>Remember: parameters execute left-to-right. Structure commands to match your workflow.</p>
-</div>
-
-<div class="success">
-    <strong>✓ Use -save strategically</strong>
-    <pre>launcher --add=script1 --add=script2 -save  ← Force immediate save</pre>
-</div>
-
-<div class="success">
-    <strong>✓ Leverage AutoHotkey variables</strong>
-    <pre>launcher --run=<span class="blue">%A_ScriptDir%</span>\tools.ahk  ← Relative to script</pre>
-</div>
-
-<div class="warning">
-    <strong>⚠️ Avoid mixing separators</strong>
-    <p>Once you set a custom separator, it persists. Be consistent or explicitly reset with <code>--sep</code></p>
-</div>
-
-<div class="info">
-    <strong>ℹ️ Backup your configuration</strong>
-    <p>Launcher saves data to disk. Consider backing up configuration if you have critical scripts.</p>
-</div>
-
-<hr>
-
-<h2>🔗 Resources</h2>
-
-<ul>
-    <li><a href="https://github.com/JoyHak/Launcher">GitHub Repository</a></li>
-    <li><a href="https://www.autohotkey.com">AutoHotkey Official Website</a></li>
-    <li><a href="https://www.autohotkey.com/docs/v1/">AutoHotkey Documentation</a></li>
-</ul>
-
-<hr>
-
-<div class="footer" style="text-align: center; padding: 20px; border-top: 1px solid #dfe2e5; color: #6a737d; font-size: 12px;">
-    <p><strong>Launcher v1.0</strong> | Copyright (c) 2026 Rafaello</p>
-    <p>For issues, feature requests, or documentation updates, visit the <a href="https://github.com/JoyHak/Launcher">GitHub repository</a></p>
-</div>
-
-
-#### Disk Usage
-
+## Disk Usage
 Each parameter can modify some internal data: variables, scripts paths, etc. Data is normally written to disk **after all parameters are processed** to reduce disk I/O operations. Use `-save` if you need to save data immediately:
 ```fsharp
 launcher --add=script1 --add=script2 -save
 launcher -restore -verbose
 ```
+
+Backup your `.ini` configuration: `-save` and `-restore` aren't magical switches, they can fail to restore previous version.
 
 ## Debugging
 If something doesn't working as expexted, please [report about it](https://github.com/JoyHak/Launcher/issues/new?template=bug-report.yaml). You can pass `-verbose` swith to each command to get additional information.
