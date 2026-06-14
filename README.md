@@ -399,8 +399,8 @@ C:\%A_Temp%\s1.ahk;C:\%A_Temp%\s2.ahk
 
 ## Examples
 #### GUI
-![](/Images/frames)
-![](/Images/vars_expand)
+![](/Images/frames.gif)
+![](/Images/vars_expand.gif)
 
 #### Command line
 Basic workflow:
