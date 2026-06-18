@@ -21,7 +21,9 @@ ExpandVariables(path) {
 }
 
 WriteAll(*) {
-    FileCopy(INI, INI '.bak', true)
+	if FileExist(INI)
+    	FileCopy(INI, INI '.bak', true)
+
     Vars.Write('variables')
     Scripts.Write('scripts')
 }
@@ -44,5 +46,9 @@ RestoreAll(*) {
     }
     
     ReadAll()
-    try FileCopy(INI '.old', INI '.bak', true)
+
+	if (FileExist(INI '.bak') && FileExist(INI '.old')) {
+		FileDelete(INI '.bak')
+    	FileCopy(INI '.old', INI '.bak', true)
+	}
 }
