@@ -6,7 +6,7 @@
 ;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
 ;@Ahk2Exe-SetLegalTrademarks MIT license
 
-ShowHelpMessage(*) {
+PrintHelp(*) {
     usage := 
     (
     "<gray>Launch saved scripts and applications.
@@ -134,7 +134,7 @@ ShowHelpMessage(*) {
       .Color('%[^%]+%',                'blue')
       .Color('@(file|list\.ini)',      'yellow')
     
-    Message(usage . synopsis . examples)
+    Print(usage . synopsis . examples)
 }
 
 

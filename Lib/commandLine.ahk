@@ -43,8 +43,8 @@ ParseFile(path, separator := ';', state := 'enabled') {
 }
 
 ParseCommandLine() {
-    global IsConsole := AttachOutput()
-
+    global IsConsole := AttachConsole()
+    
     ParseArgs:
     for args in A_Args {
         pair := args.Split('=')
@@ -77,9 +77,9 @@ ParseCommandLine() {
         case '-vars':
             grid := Vars
               .ToGrid(['Name', 'Value'])
-              .Color('m)^\s+Name| Value\s*$', 'gray')
+              .Color('m)(^\s+Name| Value\s*$)', 'gray')
 
-            Message(grid)
+            Print(grid)
             
         case '-scripts':
             _scripts := Map()
@@ -106,12 +106,12 @@ ParseCommandLine() {
             ; so they are added after all calculations
             grid := _scripts
               .ToGrid(['  Path', 'State'])
-              .Color('m)^x\s+| disabled\s*$', 'red')
-              .Color('m)^o\s+| enabled\s*$',  'cyan')
-              .Color('m)^>\s+| running\s*$',  'green')
-              .Color('m)^\s+Path| State\s*$', 'gray')
+              .Color('m)(^x\s+| disabled\s*$)', 'red')
+              .Color('m)(^o\s+| enabled\s*$)',  'cyan')
+              .Color('m)(^>\s+| running\s*$)',  'green')
+              .Color('m)(^\s+Path| State\s*$)', 'gray')
             
-            Message(grid)
+            Print(grid)
             
         case '-vars-clear':
             Vars.Clean('variables')
@@ -127,7 +127,7 @@ ParseCommandLine() {
             RestoreAll()
             
         case '-help', '-h', '-?':
-            ShowHelpMessage()    
+            PrintHelp()    
         case '--sep':
             Vars['scriptsSep'] := GetValue() 
             Verbose('Set separator: ' GetValue())

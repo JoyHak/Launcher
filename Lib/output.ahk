@@ -1,105 +1,73 @@
-GetOutputHandle() {
-    static STD_INPUT_HANDLE   := -10
-    static STD_OUTPUT_HANDLE  := -11
-    static STD_ERROR_HANDLE   := -12
+Colorize(msg, regex := '', color := 'white', bold := false) {
+    ; Applies ANSI codes to the message
+    ; https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
+    
+    static colors := Map(
+        'black',    30,
+        'red',      31,
+        'yellow',   33,
+        'gray',     90,
+        'green',    92,
+        'blue',     94,
+        'purple',   95,
+        'cyan',     96,
+    )
+    
+    if (!color || color = 'white')
+        return msg
+    
+    code  := colors.Get(color, 37)  
+    
+    static esc := Chr(27)
+    static end := esc '[0m'
+    begin      := esc '[' bold ';' code 'm'
+    
+    if !regex
+        return begin . msg . end
 
-    return DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE)     
+    return RegExReplace(
+        msg, 
+        regex,
+        begin '$1' end
+    )
 }
 
-FreeOutput(*) {
-    if !(hConsole := DllCall('GetConsoleWindow'))
-        return false
-        
-    ControlSend('{Enter}', , 'ahk_id ' hConsole)
-    
-    return DllCall('FreeConsole')
+DeColorize(str) {
+    static esc := Chr(27)
+
+    return RegExReplace(
+        str, 
+        'U)' esc '\[\d+;\d+m(.+)' esc '\[0m', 
+        '$1'
+    )
 }
 
-AttachOutput() {
-    DllCall('FreeConsole')
+({}.DefineProp)(String.prototype, 'Color', {call: Colorize})
+({}.DefineProp)(String.prototype, 'Strip', {call: DeColorize})
+
+
+Print(msg, color := 'white', bold := false, icon := '') {
+    msg .= '`n'
     
-    if !DllCall('AttachConsole', 'int', -1)
-        return false
-    
-    OnExit(FreeOutput)
-    OnError(Exception)
+    if IsConsole {
+        FileAppend(msg.Color(, color, bold), 'CONOUT$')
+    } else {
+        MsgBox(msg.Strip(), A_ScriptName, icon)
+    }
     
     return true
 }
 
-Output(text, color := 'white') {
-    static colors := Map(
-        'black',    0,
-        'blue',     1,
-        'green',    2,
-        'cyan',     3,
-        'red',      4,
-        'magenta',  5,
-        'yellow',   6,
-        'white',    7,
-        'gray',     8,
-    )
-    
-    normalColor := colors.Get(color, 7)
-    
-    Print(msg, _color := normalColor) {
-        static hConsole := GetOutputHandle()
-        DllCall(
-            'SetConsoleTextAttribute', 
-            'ptr', hConsole, 
-            'uint', _color
-        )
-        
-        FileAppend(msg, 'CONOUT$')
-    }
-
-    pos := 1
-    while (pos <= text.length) {
-        if (RegExMatch(text, 's)<(\w+)>(.*?)</\1>', &match, pos)) {
-            ; Print normal text before the match
-            normalText := text.Slice(pos, match.pos - pos)
-            if (normalText)
-                Print(normalText)
-            
-            ; Handle nested tags
-            Output(match[2], match[1])
-            
-            ; Move position forward
-            pos := match.pos + match.len
-        } else {
-            ; Print remaining text
-            Print(text.Slice(pos))
-            break
-        }
-    }
-}
-
-Message(msg, icon := '', normalColor := 'white') {
-    if IsConsole
-        return Output(msg '`n', normalColor)
-
-    msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
-    return MsgBox(msg, A_ScriptName, icon)
-}
-
 Verbose(msg) {
     if IsVerbose
-        Message(Format('<gray>{}</gray>', msg))
+        return Print(msg, 'gray')
+        
+    return false
 }
 
-Warning(msg, what := A_ScriptName) {
-    Message(
-        Format('<yellow>{} warning - {}</yellow>', what, msg), 
-        'Icon!'
-    )
-}
+Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', , 'Icon!')
 
-Err(msg, what := A_ScriptName) {
-    Message(
-        Format('<red>{} error - {}</red>', what, msg), 
-        'Iconx'
-    )
-}
+Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', , 'Iconx')
 
 Exception(ex, *) {
     Err(ex.message '`n' ex.extra, ex.what)
@@ -107,10 +75,32 @@ Exception(ex, *) {
 }
 
 
-Colorize(str, regex, colorTag) {
-    return RegExReplace(
-        str, 
-        regex,
-        Format('<{1}>$0</{1}>', colorTag)
-    )
+FreeOutput(*) {
+    if (hConsole := DllCall('GetConsoleWindow'))
+        ControlSend('{Enter}', , 'ahk_id ' hConsole)
+        
+    return DllCall('FreeConsole')
+}
+
+AttachConsole() {
+    if !DllCall("AttachConsole", "int", -1)
+        return false
+    
+    static STD_INPUT_HANDLE   := -10
+    static STD_OUTPUT_HANDLE  := -11
+    static STD_ERROR_HANDLE   := -12
+    
+    if !(hConsole := DllCall("GetStdHandle", "int", STD_OUTPUT_HANDLE))
+        return false
+    
+    ; Enable ANSI codes processing
+    if DllCall("GetConsoleMode", "Ptr", hConsole, "UIntP", &mode := 0) {
+        mode |= 0x0004  ; ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        DllCall("SetConsoleMode", "Ptr", hConsole, "UInt", mode)
+    }
+
+    OnExit(FreeOutput)
+    OnError(Exception)
+    
+    return hConsole
 }

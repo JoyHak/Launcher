@@ -1,24 +1,37 @@
-ExpandVariables(path) {
-    ; Performs a dereference of all built-in, declared and env. variables
-    ; Returns the path without variables
-    pos  := 0
-    
-    while (pos := RegExMatch(path, "%(\w+)%", &match, ++pos)) {
-        var := match[1]
-        if Vars.Has(var) {
-            path := StrReplace(path, "%" var "%", Vars[var])
-        } else if IsSet(%var%) {
-            path := StrReplace(path, "%" var "%", %var%)
-        } else if EnvGet(var) {
-            path := StrReplace(path, "%" var "%", EnvGet(var))
-        } else {
-            Err('Unassigned variable: %' var '%.`nPath: "' path '"', 'Variable')
-            ExitApp(3)
+MapWrite(pairsMap, section := 'variables') {
+    for var, value in pairsMap {
+        switch value, false {
+        case 'running':
+            ; External state, must be ignored
+            continue
+        case 'unset':
+            ; Internal state, marked for deletion
+            IniDelete(INI, section, var)
+        default:
+            IniWrite(value, INI, section, var)
         }
     }
-    
-    return path
 }
+
+MapRead(pairsMap, section := 'variables') {
+    if !FileExist(INI)
+        return
+
+    loop parse IniRead(INI, section), '`n' {
+        pair := StrSplit(A_LoopField, '=')
+        pairsMap.Set(pair[1], pair[2])
+    }
+}
+
+MapClean(pairsMap, section := 'variables') {
+    IniDelete(INI, section)
+    pairsMap.Clear()
+}
+
+Map.prototype.DefineProp('Clean',    {call: MapClean})
+Map.prototype.DefineProp('Write',    {call: MapWrite})
+Map.prototype.DefineProp('Read',     {call: MapRead})
+
 
 WriteAll(*) {
 	if FileExist(INI)
@@ -51,4 +64,27 @@ RestoreAll(*) {
 		FileDelete(INI '.bak')
     	FileCopy(INI '.old', INI '.bak', true)
 	}
+}
+
+
+ExpandVariables(path) {
+    ; Performs a dereference of all built-in, declared and env. variables
+    ; Returns the path without variables
+    pos  := 0
+    
+    while (pos := RegExMatch(path, "%(\w+)%", &match, ++pos)) {
+        var := match[1]
+        if Vars.Has(var) {
+            path := StrReplace(path, "%" var "%", Vars[var])
+        } else if IsSet(%var%) {
+            path := StrReplace(path, "%" var "%", %var%)
+        } else if EnvGet(var) {
+            path := StrReplace(path, "%" var "%", EnvGet(var))
+        } else {
+            Err('Unassigned variable: %' var '%.`nPath: "' path '"', 'Variable')
+            ExitApp(3)
+        }
+    }
+    
+    return path
 }

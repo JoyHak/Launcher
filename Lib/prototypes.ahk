@@ -7,36 +7,6 @@ MapToString(m) {
     return LTrim(str, '`n')
 }
 
-MapWrite(pairsMap, section := 'variables') {
-    for var, value in pairsMap {
-        switch value, false {
-        case 'running':
-            ; External state, must be ignored
-            continue
-        case 'unset':
-            ; Internal state, marked for deletion
-            IniDelete(INI, section, var)
-        default:
-            IniWrite(value, INI, section, var)
-        }
-    }
-}
-
-MapRead(pairsMap, section := 'variables') {
-    if !FileExist(INI)
-        return
-
-    loop parse IniRead(INI, section), '`n' {
-        pair := StrSplit(A_LoopField, '=')
-        pairsMap.Set(pair[1], pair[2])
-    }
-}
-
-MapClean(pairsMap, section := 'variables') {
-    IniDelete(INI, section)
-    pairsMap.Clear()
-}
-
 MapToGrid(m, columns := ['key', 'value']) {
     ; Returns key-value pairs aligned as grid.
 
@@ -67,12 +37,11 @@ MapToGrid(m, columns := ['key', 'value']) {
     return RTrim(grid, ' `t`n')
 }
 
-Map.prototype.DefineProp('Clean',    {call: MapClean})
-Map.prototype.DefineProp('Write',    {call: MapWrite})
-Map.prototype.DefineProp('Read',     {call: MapRead})
+
 Map.prototype.DefineProp('ToString', {call: MapToString})
 Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
 
+({}.DefineProp)(String.prototype, 'Length',     {get:  StrLen})
 ({}.DefineProp)(String.prototype, 'Slice',      {call: SubStr})
 ({}.DefineProp)(String.prototype, 'Split',      {call: StrSplit})
 ({}.DefineProp)(String.prototype, 'Replace',    {call: StrReplace})
@@ -81,8 +50,3 @@ Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
 ({}.DefineProp)(String.prototype, 'Trim',       {call: Trim})  
 ({}.DefineProp)(String.prototype, 'Normalize',  {call: (s) => Trim(s, ' `t`r`n`"`'')})  
 ({}.DefineProp)(String.prototype, 'Find',       {call: (s, needle, pos := 1) => InStr(s, needle, , pos)})
-
-({}.DefineProp)(String.prototype, 'ShortName',  {call: GetShortName})
-({}.DefineProp)(String.prototype, 'Color',      {call: Colorize})
-
-({}.DefineProp)(String.prototype, 'Length',     {get:  StrLen})
