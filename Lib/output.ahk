@@ -7,7 +7,9 @@ Colorize(msg, regex := '', color := 'white', bold := false) {
         'red',      31,
         'yellow',   33,
         'gray',     90,
+        'crimson',  91,
         'green',    92,
+        'orange',   93,
         'blue',     94,
         'purple',   95,
         'cyan',     96,
@@ -44,6 +46,7 @@ DeColorize(str) {
 
 ({}.DefineProp)(String.prototype, 'Color', {call: Colorize})
 ({}.DefineProp)(String.prototype, 'Strip', {call: DeColorize})
+({}.DefineProp)(String.prototype, 'Print', {call: Print})
 
 
 Print(msg, color := 'white', bold := false, icon := '') {
