@@ -72,14 +72,14 @@ ExpandVariables(path) {
     ; Returns the path without variables
     pos  := 0
     
-    while (pos := RegExMatch(path, "%(\w+)%", &match, ++pos)) {
+    while (pos := path.Match("%(\w+)%", &match, ++pos)) {
         var := match[1]
         if Vars.Has(var) {
-            path := StrReplace(path, "%" var "%", Vars[var])
+            path := path.Replace("%" var "%", Vars[var])
         } else if IsSet(%var%) {
-            path := StrReplace(path, "%" var "%", %var%)
+            path := path.Replace("%" var "%", %var%)
         } else if EnvGet(var) {
-            path := StrReplace(path, "%" var "%", EnvGet(var))
+            path := path.Replace("%" var "%", EnvGet(var))
         } else {
             Err('Unassigned variable: %' var '%.`nPath: "' path '"', 'Variable')
             ExitApp(3)

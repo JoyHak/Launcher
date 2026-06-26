@@ -342,8 +342,8 @@ class ScriptManager {
         
         path := ExpandVariables(path)
 
-        if (path.Slice(1, 1) = '@') {
-            path := path.Slice(2)  ; omit @
+        if (path[1] = '@') {
+            path := path.LTrim('@')
             _scripts := ParseFile(path, Vars['scriptsSep'])
         } else {
             _scripts := ParseScripts(path, Vars['scriptsSep'])

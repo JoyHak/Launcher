@@ -37,16 +37,27 @@ MapToGrid(m, columns := ['key', 'value']) {
     return RTrim(grid, ' `t`n')
 }
 
+Join(m, sep := '') {
+    str := ''
+    for key in m
+        str .= sep . key
+        
+    return LTrim(str, sep)
+}
+
 
 Map.prototype.DefineProp('ToString', {call: MapToString})
 Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
+Map.prototype.DefineProp('Join',     {call: Join})
 
 ({}.DefineProp)(String.prototype, 'Length',     {get:  StrLen})
 ({}.DefineProp)(String.prototype, 'Slice',      {call: SubStr})
 ({}.DefineProp)(String.prototype, 'Split',      {call: StrSplit})
 ({}.DefineProp)(String.prototype, 'Replace',    {call: StrReplace})
+({}.DefineProp)(String.prototype, 'Match',      {call: RegExMatch})
 ({}.DefineProp)(String.prototype, 'RTrim',      {call: RTrim})
 ({}.DefineProp)(String.prototype, 'LTrim',      {call: LTrim})
 ({}.DefineProp)(String.prototype, 'Trim',       {call: Trim})  
 ({}.DefineProp)(String.prototype, 'Normalize',  {call: (s) => Trim(s, ' `t`r`n`"`'')})  
 ({}.DefineProp)(String.prototype, 'Find',       {call: (s, needle, pos := 1) => InStr(s, needle, , pos)})
+({}.DefineProp)(String.prototype, '__Item',     {get:  (s, i, len := 1)  => SubStr(s, i, len)}) 

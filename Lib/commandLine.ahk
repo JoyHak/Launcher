@@ -61,8 +61,8 @@ ParseCommandLine() {
         GetScripts(state := 'enabled') {
             path := ExpandVariables(GetValue())
 
-            if (path.Slice(1, 1) = '@') {
-                path := path.Slice(2)  ; omit @
+            if (path[1] = '@') {
+                path := path.LTrim('@')
                 return ParseFile(path, Vars['scriptsSep'], state)
             } else {
                 return ParseScripts(path, Vars['scriptsSep'], state)
