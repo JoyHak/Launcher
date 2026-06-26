@@ -13,7 +13,7 @@ PrintHelp(*) {
     Copyright (c) 2026 Rafaello
     https://github.com/JoyHak/Launcher~
     
-    #Usage:
+    #Usage:#
       launcher --param=script1~[;script2;script3...]~
       launcher --param=@file
       launcher -switch
@@ -22,7 +22,7 @@ PrintHelp(*) {
 )'
     synopsis := '
     (`
-    #Parameters:
+    #Parameters:#
       --add      add script(s)
       --enable   enable script(s) or
                  add script(s) and enable
@@ -36,7 +36,7 @@ PrintHelp(*) {
       
       --sep      set separator between scripts
 
-    #Switches:
+    #Switches:#
       -autorun         run all enabled scripts
       -autoclose       close all running scripts
       
@@ -125,18 +125,26 @@ PrintHelp(*) {
     
     msg := usage . synopsis . examples
     
-    msg := 
-      msg
-       .Color('(\-+[\-\w]+)', 'cyan')   ; switches 
-       .Color('(mainDir|AhkDir)(?=\=)',    'purple')   ; variables names
-       .Color('(%[^%]+%)',                 'blue')     ; variables values
-       .Color('(@(file|list\.ini))',       'yellow')   ; list
-       .Color('``([^``]+)``',              'green')    ; code
-       .Color('(?<!@)("[^"@]+")',          'green')    ; quotes
-       .Color('<([^>]+)>',                 'purple')            
-       .Color('\*([^*]+)\*',               'crimson')  
-       .Color('\~([^\~]+)\~',              'gray')  
-       .Color('#([^#\n]+)$',               'yellow', true)  ; bold
+    msg := msg.Region(Map(
+        '~',    'gray', 
+        '*',    'crimson', 
+        '``',   'green', 
+        '#',    'yellow', 
+        '%',    'blue', 
+    ))
+    
+    ; msg := 
+      ; msg
+       ; .Color('(\-+[\-\w]+)', 'cyan')   ; switches 
+       ; .Color('(mainDir|AhkDir)(?=\=)',    'purple')   ; variables names
+       ; .Color('(%[^%]+%)',                 'blue')     ; variables values
+       ; .Color('(@(file|list\.ini))',       'yellow')   ; list
+       ; .Color('``([^``]+)``',              'green')    ; code
+       ; .Color('(?<!@)("[^"@]+")',          'green')    ; quotes
+       ; .Color('<([^>]+)>',                 'purple')            
+       ; .Color('\*([^*]+)\*',               'crimson')  
+       ; .Color('\~([^\~]+)\~',              'gray')  
+       ; .Color('#([^#\n]+)$',               'yellow', true)  ; bold
     
     Print(msg)
 }

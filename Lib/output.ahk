@@ -34,7 +34,74 @@ Colorize(msg, regex := '', color := 'white', bold := false) {
     )
 }
 
+ColorizeRegion(msg, boundaries := Map('"', 'green')) {
+    ; Applies a color (ANSI) to a text part bounded by the 
+    ; specified characters (boundaries). 
+    ; For each part, a color from the provided Map is applied. 
+    ; Supports nested color regions.
+    static colors := Map(
+        'black',    30,
+        'red',      31,
+        'yellow',   33,
+        'gray',     90,
+        'crimson',  91,
+        'green',    92,
+        'orange',   93,
+        'blue',     94,
+        'purple',   95,
+        'cyan',     96,
+    )
+    
+    regex  := ''
+    for char, color in boundaries {
+        regex .= char
+        boundaries[char] := colors[boundaries[char]]
+    }
+        
+    ; regex := Format('U)(?<chrA>[{1}])(?<msg>[^{1}]+)(?<chrB>.)', regex)
+    regex := Format('U)(?<chr>[{1}])(?<msg>[^{1}]+)', regex)
+    
+    pos := 1
+    len := msg.length
+    clrMsg := ''
+    
+    static esc := Chr(27)
+    static end := esc '[0m'
+    
+    stack := []
+    stack.capacity := boundaries.capacity * 2
+    
+    while (pos <= len) {
+        if msg.Match(regex, &match, pos) {
+            ; Normal text before the match
+            text := msg.Slice(pos, match.pos - pos)
+            if (text)
+                clrMsg .= text
+            
+            if (stack.Has(-1) && stack[-1] = match.chr) {
+                clrMsg .= end . match.msg
+                stack.Pop()
+            } else {
+                code   := boundaries[match.chr]
+                begin  := esc '[0;' code 'm'
+                clrMsg .= begin . match.msg
+                stack.Push(match.chr)
+            }
+            
+            ; Move position forward
+            pos := match.pos + match.len
+        } else {
+            ; Remaining text
+            clrMsg .= msg.Slice(pos)
+            break
+        }
+    }
+    
+    return clrMsg
+}
+
 DeColorize(str) {
+    ; Strip (remove) all ANSI codes
     static esc := Chr(27)
 
     return RegExReplace(
@@ -44,9 +111,10 @@ DeColorize(str) {
     )
 }
 
-({}.DefineProp)(String.prototype, 'Color', {call: Colorize})
-({}.DefineProp)(String.prototype, 'Strip', {call: DeColorize})
-({}.DefineProp)(String.prototype, 'Print', {call: Print})
+({}.DefineProp)(String.prototype, 'Color',  {call: Colorize})
+({}.DefineProp)(String.prototype, 'Region', {call: ColorizeRegion})
+({}.DefineProp)(String.prototype, 'Strip',  {call: DeColorize})
+({}.DefineProp)(String.prototype, 'Print',  {call: Print})
 
 
 Print(msg, color := 'white', bold := false, icon := '') {
