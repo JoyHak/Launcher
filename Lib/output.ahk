@@ -33,11 +33,10 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
         return begin . msg . end
     }
     
+    regex := ''
     if (aRegexColor[1] ~= 'm)^\w+\)$') {
         ; Options comes first
-        regex := aRegexColor.RemoveAt(1) . '(?|'
-    } else {
-        regex := '(?|'
+        regex := aRegexColor.RemoveAt(1)
     }
     
     ; Convert input color names to ANSI codes
@@ -47,8 +46,6 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
     
     index     := 1
     idxColor  := 1
-    idxColors := Array()
-    idxColors.capacity := aRegexColor.capacity
     
     loop (aRegexColor.length / 2) {
         str   := aRegexColor[index++]
@@ -61,15 +58,21 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
         } else {
             ; Patterns are combined using the OR | operator.
             ; Index will be used to indentify pattern color
-            regex .= str '(*MARK:' idxColor++ ')|' 
-            idxColors.Push(colors[color])
+            regex .= str '(*MARK:' idxColor ')|' 
+            chrColors[String(idxColor++)] := colors[color]
         }
     }
     
     if chars
-        regex .= '(?<chr>[' chars '])(*MARK:chr))'
+        regex .= '(?<chr>[' chars '])(*MARK:chr)'
     else
-        regex := regex.RTrim('|') . ')'
+        regex := regex.RTrim('|')
+        
+    ; Branch reset allows to extract 1st capturing group 
+    ; from any found pattern, separated by the OR operator. 
+    ; I.e. it gives polymorphism. Regardless of capturing groups 
+    ; count match[1] always returns captured text.
+    regex := '(?|' regex ')'
         
     ; Parse the message
     pos := 1
@@ -91,8 +94,13 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
         
         if (match.mark != 'chr') {
             ; Atomic pattern that has no pair
-            begin  := esc '[0;' idxColors[match.mark] 'm'
-            clrMsg .= begin . match[1] . end
+            begin  := esc '[0;' chrColors[match.mark] 'm'
+            if (stack.Has(-1)) {
+                _end := esc '[0;' chrColors[stack[-1]] 'm'
+                clrMsg .= begin . match[1] . _end
+            } else {
+                clrMsg .= begin . match[1] . end
+            }
             pos    := match.pos + match.len
             continue
         }
