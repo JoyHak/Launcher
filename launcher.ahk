@@ -124,29 +124,20 @@ PrintHelp(*) {
 )'
     
     msg := usage . synopsis . examples
-    
-    msg := msg.Region(Map(
-        '~',    'gray', 
-        '*',    'crimson', 
-        '``',   'green', 
-        '#',    'yellow', 
-        '%',    'blue', 
-    ))
-    
-    ; msg := 
-      ; msg
-       ; .Color('(\-+[\-\w]+)', 'cyan')   ; switches 
-       ; .Color('(mainDir|AhkDir)(?=\=)',    'purple')   ; variables names
-       ; .Color('(%[^%]+%)',                 'blue')     ; variables values
-       ; .Color('(@(file|list\.ini))',       'yellow')   ; list
-       ; .Color('``([^``]+)``',              'green')    ; code
-       ; .Color('(?<!@)("[^"@]+")',          'green')    ; quotes
-       ; .Color('<([^>]+)>',                 'purple')            
-       ; .Color('\*([^*]+)\*',               'crimson')  
-       ; .Color('\~([^\~]+)\~',              'gray')  
-       ; .Color('#([^#\n]+)$',               'yellow', true)  ; bold
-    
-    Print(msg)
+
+    msg := 
+      msg.Color(Map(
+        '(@(file|list\.ini))',      'yellow',   ; list
+        '(mainDir|AhkDir)(?=\=)',   'purple',   ; variables names
+        '(%[^%]+%)',                'blue',     ; variables values
+        '(\-+[\-\w]+)',             'cyan',     ; switches
+        '~',                        'gray', 
+        '%',                        'blue',
+        '``',                       'green', 
+        '#',                        'yellow', 
+        '*',                        'crimson', 
+    )).Print()
+        ; '(?<!@)("[^"@]+")',         'green',    ; quotes
 }
 
 

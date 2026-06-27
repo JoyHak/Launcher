@@ -1,5 +1,9 @@
-Colorize(msg, regex := '', color := 'white', bold := false) {
-    ; Applies ANSI codes to the message
+Colorize(msg, mRegexColor := Map('"', 'green')) {
+    ; Searches for text parts by regular expression and applies
+    ; specified color (ANSI code).
+    ; `mRegexColor` is a `Map` with "regex-color" pairs
+    ; or `String` with single color name.
+    ; Can create nested colored parts.
     ; https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
     
     static colors := Map(
@@ -15,113 +19,101 @@ Colorize(msg, regex := '', color := 'white', bold := false) {
         'cyan',     96,
     )
     
-    if (!color || color = 'white')
-        return msg
-    
-    code  := colors.Get(color, 37)  
-    
     static esc := Chr(27)
     static end := esc '[0m'
-    begin      := esc '[' bold ';' code 'm'
     
-    if !regex
+    if (mRegexColor is String) {
+        if (!mRegexColor || mRegexColor = 'white')
+            return msg
+        
+        code  := colors.Get(mRegexColor, 37)  
+        begin := esc '[0;' code 'm'
+        
         return begin . msg . end
-
-    return RegExReplace(
-        msg, 
-        regex,
-        begin '$1' end
-    )
-}
-
-ColorizeRegion(msg, boundaries := Map('"', 'green')) {
-    ; Applies a color (ANSI) to a text part bounded by the 
-    ; specified characters (boundaries). 
-    ; For each part, a color from the provided Map is applied. 
-    ; Supports nested color regions.
-    static colors := Map(
-        'black',    30,
-        'red',      31,
-        'yellow',   33,
-        'gray',     90,
-        'crimson',  91,
-        'green',    92,
-        'orange',   93,
-        'blue',     94,
-        'purple',   95,
-        'cyan',     96,
-    )
+    }
     
     regex  := ''
-    for char, color in boundaries {
-        regex .= char
-        boundaries[char] := colors[boundaries[char]]
+    chars  := ''
+    chrColors := Map()
+    
+    index := 1
+    idxColors := Array()
+    
+    for str, color in mRegexColor {
+        if (str.length = 1) {
+            ; Characters are combined into set []
+            chars .= str
+            chrColors[str] := colors[color]
+        } else {
+            ; Patterns are combined using the OR | operator.
+            ; Index will be used to indentify pattern color
+            regex .= str '(*MARK:' index++ ')|' 
+            idxColors.Push(colors[color])
+        }
     }
-        
-    ; regex := Format('U)(?<chrA>[{1}])(?<msg>[^{1}]+)(?<chrB>.)', regex)
-    regex := Format('U)(?<chr>[{1}])(?<msg>[^{1}]+)', regex)
+    
+    regex .= '(?<chr>[' chars '])(*MARK:chr)'
     
     pos := 1
     len := msg.length
     clrMsg := ''
     
-    static esc := Chr(27)
-    static end := esc '[0m'
-    
     stack := []
-    stack.capacity := boundaries.capacity * 2
+    stack.capacity := mRegexColor.capacity * 2
     
     while (pos <= len) {
-        if msg.Match(regex, &match, pos) {
-            ; Normal text before the match
-            text := msg.Slice(pos, match.pos - pos)
-            if (text)
-                clrMsg .= text
-            
-            if (stack.Has(-1) && stack[-1] = match.chr) {
-                clrMsg .= end . match.msg
-                stack.Pop()
-            } else {
-                code   := boundaries[match.chr]
-                begin  := esc '[0;' code 'm'
-                clrMsg .= begin . match.msg
-                stack.Push(match.chr)
-            }
-            
-            ; Move position forward
-            pos := match.pos + match.len
-        } else {
+        if !msg.Match(regex, &match, pos) {
             ; Remaining text
             clrMsg .= msg.Slice(pos)
             break
         }
+        
+        ; Normal text before the match
+        text := msg.Slice(pos, match.pos - pos)
+        if (text)
+            clrMsg .= text
+        
+        if (match.mark != 'chr') {
+            ; Atomic pattern that has no pair
+            begin  := esc '[0;' idxColors[match.mark] 'm'
+            clrMsg .= begin . match[1] . end
+            pos    := match.pos + 1
+            continue
+        }
+        
+        ; Single characters have a pair: " ", ` `, etc.
+        if (stack.Has(-1) && stack[-1] = match.chr) {
+            clrMsg .= end
+            stack.Pop()
+        } else {
+            begin  := esc '[0;' chrColors[match.chr] 'm'
+            clrMsg .= begin
+            stack.Push(match.chr)
+        }
+        
+        ; Move position forward
+        pos := match.pos + 1
     }
     
     return clrMsg
 }
 
 DeColorize(str) {
-    ; Strip (remove) all ANSI codes
+    ; Strips (removes) all ANSI codes
     static esc := Chr(27)
-
-    return RegExReplace(
-        str, 
-        'U)' esc '\[\d+;\d+m(.+)' esc '\[0m', 
-        '$1'
-    )
+    return RegExReplace(str, 'U)' esc '\[\d+(;\d+)?m')
 }
 
 ({}.DefineProp)(String.prototype, 'Color',  {call: Colorize})
-({}.DefineProp)(String.prototype, 'Region', {call: ColorizeRegion})
 ({}.DefineProp)(String.prototype, 'Strip',  {call: DeColorize})
 ({}.DefineProp)(String.prototype, 'Print',  {call: Print})
 
 
-Print(msg, color := 'white', bold := false, icon := '') {
+Print(msg, color := 'white', icon := '') {
     msg .= '`n'
     
     if IsConsole {
-        FileAppend(msg.Color(, color, bold), 'CONOUT$')
+        FileAppend(msg.Color(color), 'CONOUT$')
     } else {
         MsgBox(msg.Strip(), A_ScriptName, icon)
     }
@@ -136,9 +128,9 @@ Verbose(msg) {
     return false
 }
 
-Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', , 'Icon!')
+Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', 'Icon!')
 
-Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', , 'Iconx')
+Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', 'Iconx')
 
 Exception(ex, *) {
     Err(ex.message '`n' ex.extra, ex.what)
