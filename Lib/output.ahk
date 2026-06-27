@@ -55,6 +55,11 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
             ; Characters are combined into set []
             chars .= str
             chrColors[str] := colors[color]
+        } else if (str[1] = '/') {
+            ; Characters escaped with slash are combined into groups
+            str := str.Slice(2)
+            chrColors[str] := colors[color]
+            regex .= '(' str ')(*MARK:chr)|' 
         } else {
             ; Patterns are combined using the OR | operator.
             ; Index will be used to indentify pattern color
@@ -64,7 +69,7 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
     }
     
     if chars
-        regex .= '(?<chr>[' chars '])(*MARK:chr)'
+        regex .= '([' chars '])(*MARK:chr)'
     else
         regex := regex.RTrim('|')
         
@@ -105,14 +110,16 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
             continue
         }
 
-        ; Single characters have a pair: " ", ` `, etc.
-        if (stack.Has(-1) && stack[-1] = match.chr) {
+        ; Characters that have a pair: " ", ` `, etc. (non-atomic)
+        ; Can consist of multiple characters if they were 
+        ; escaped with a slash: /** /**, /" /"
+        if (stack.Has(-1) && stack[-1] = match[1]) {
             clrMsg .= end
             stack.Pop()
         } else {
-            begin  := esc '[0;' chrColors[match.chr] 'm'
+            begin  := esc '[0;' chrColors[match[1]] 'm'
             clrMsg .= begin
-            stack.Push(match.chr)
+            stack.Push(match[1])
         }
         
         pos := match.pos + 1

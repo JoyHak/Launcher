@@ -136,7 +136,7 @@ PrintHelp(*) {
         '~',                      'gray',
         '``',                     'green', 
         '#',                      'orange', 
-        '"',                      'green', 
+        '/"',                      'green', 
       ]).Print()
 }
 
