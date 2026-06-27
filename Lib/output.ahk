@@ -1,8 +1,8 @@
-Colorize(msg, aRegexColor := Map('"', 'green')) {
+Colorize(msg, aRegexColor := ['"', 'green']) {
     ; Searches for text parts by regular expression and applies
     ; specified color (ANSI code).
     ; `aRegexColor` is an `Array` with "regex, color" pairs
-    ; or `String` with single color name.
+    ; or `String` with single color name: "green", "yellow".
     ; Can create nested colored parts.
     ; https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
     
@@ -33,13 +33,14 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
         return begin . msg . end
     }
     
-    regex := ''
+    options := 'S)'   ; study the pattern
     if (aRegexColor[1] ~= 'm)^\w+\)$') {
         ; Options comes first
-        regex := aRegexColor.RemoveAt(1)
+        options := options.RTrim(')') . aRegexColor.RemoveAt(1)
     }
     
     ; Convert input color names to ANSI codes
+    regex     := ''
     chars     := ''
     chrColors := Map()
     chrColors.capacity := aRegexColor.capacity
@@ -56,7 +57,7 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
             chars .= str
             chrColors[str] := colors[color]
         } else if (str[1] = '/') {
-            ; Characters escaped with slash are combined into groups
+            ; Characters escaped with a slash are combined into groups
             str := str.Slice(2)
             chrColors[str] := colors[color]
             regex .= '(' str ')(*MARK:chr)|' 
@@ -77,7 +78,7 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
     ; from any found pattern, separated by the OR operator. 
     ; I.e. it gives polymorphism. Regardless of capturing groups 
     ; count match[1] always returns captured text.
-    regex := '(?|' regex ')'
+    regex := options '(?|' regex ')'
         
     ; Parse the message
     pos := 1
@@ -86,7 +87,7 @@ Colorize(msg, aRegexColor := Map('"', 'green')) {
     
     stack := []
     stack.capacity := aRegexColor.capacity * 2
-    
+
     while (pos <= len) {
         if !msg.Match(regex, &match, pos) {
             ; Remaining text
