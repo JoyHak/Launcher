@@ -34,7 +34,7 @@ Colorize(msg, aRegexColor := ['"', 'green']) {
     }
     
     options := 'S)'   ; study the pattern
-    if (aRegexColor[1] ~= 'm)^\w+\)$') {
+    if (aRegexColor[1] ~= 'mS)^\w+\)$') {
         ; Options comes first
         options := options.RTrim(')') . aRegexColor.RemoveAt(1)
     }
@@ -56,11 +56,6 @@ Colorize(msg, aRegexColor := ['"', 'green']) {
             ; Characters are combined into set []
             chars .= str
             chrColors[str] := colors[color]
-        } else if (str[1] = '/') {
-            ; Characters escaped with a slash are combined into groups
-            str := str.Slice(2)
-            chrColors[str] := colors[color]
-            regex .= '(' str ')(*MARK:chr)|' 
         } else {
             ; Patterns are combined using the OR | operator.
             ; Index will be used to indentify pattern color
@@ -97,6 +92,8 @@ Colorize(msg, aRegexColor := ['"', 'green']) {
         
         ; Normal text before the match
         clrMsg .= msg.Slice(pos, match.pos - pos)
+        ; Move position forward
+        pos    := match.pos + match.len
         
         if (match.mark != 'chr') {
             ; Atomic pattern that has no pair
@@ -107,7 +104,6 @@ Colorize(msg, aRegexColor := ['"', 'green']) {
             } else {
                 clrMsg .= begin . match[1] . end
             }
-            pos    := match.pos + match.len
             continue
         }
 
@@ -122,8 +118,6 @@ Colorize(msg, aRegexColor := ['"', 'green']) {
             clrMsg .= begin
             stack.Push(match[1])
         }
-        
-        pos := match.pos + 1
     }
     
     return clrMsg

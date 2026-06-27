@@ -63,9 +63,9 @@ PrintHelp(*) {
       launcher --sep=`^` --run=quickswitch`^`radify
       launcher --run=arrows`^`chars  separator is saved
       
-      Special batch/powershell symbols can be escaped via quotes:
+      Special batch/powershell symbols can be escaped via `quotes`:
       launcher --sep='|'
-      launcher --sep="|"
+      launcher --sep=`"|"`
 
     You can specify full path or filename only:
       launcher --run=quickswitch
@@ -78,12 +78,12 @@ PrintHelp(*) {
       launcher --add=@list.ini
       launcher --remove=@list.ini
 
-      @file can be quoted full path:
-        launcher --run=@"C:\Temp files\My scripts"
-        launcher --run="@C:\Temp files\My scripts"
+      @file can be `quoted` full path:
+        launcher --run=`@"C:\Temp files\My scripts"`
+        launcher --run=`"@C:\Temp files\My scripts"`
 
         or path with variables:
-        launcher list=C:\listfile.ini --add=@%list%
+        launcher list=C:\listfile.ini --add=#@#%list%
 
       @file may contain scripts, variables and
       strings, separated by --sep:
@@ -119,7 +119,7 @@ PrintHelp(*) {
         
       ...and include them to @file:
         C:\%A_Temp%\script.ahk     line from @list.ini
-        launcher --add=@list.ini   will add "C:\%A_Temp%\script.ahk"
+        launcher --add=@list.ini   will add `"C:\%A_Temp%\script.ahk"`
 
 )'
     
@@ -135,8 +135,7 @@ PrintHelp(*) {
         '__([^_]+)__',            'magenta',  
         '~',                      'gray',
         '``',                     'green', 
-        '#',                      'orange', 
-        '/"',                      'green', 
+        '#',                      'orange'
       ]).Print()
 }
 
