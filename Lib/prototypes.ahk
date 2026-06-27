@@ -37,7 +37,7 @@ MapToGrid(m, columns := ['key', 'value']) {
     return RTrim(grid, ' `t`n')
 }
 
-Join(m, sep := '') {
+Join(m, sep := ',') {
     str := ''
     for key in m
         str .= sep . key
@@ -45,10 +45,11 @@ Join(m, sep := '') {
     return LTrim(str, sep)
 }
 
-
-Map.prototype.DefineProp('ToString', {call: MapToString})
-Map.prototype.DefineProp('ToGrid',   {call: MapToGrid})
-Map.prototype.DefineProp('Join',     {call: Join})
+Map.prototype.DefineProp('ToString',    {call: MapToString})
+Map.prototype.DefineProp('ToGrid',      {call: MapToGrid})
+Map.prototype.DefineProp('Join',        {call: Join})
+Array.prototype.DefineProp('Join',      {call: Join})
+Array.prototype.DefineProp('ToString',  {call: Join})
 
 ({}.DefineProp)(String.prototype, 'Length',     {get:  StrLen})
 ({}.DefineProp)(String.prototype, 'Slice',      {call: SubStr})

@@ -17,7 +17,7 @@ PrintHelp(*) {
       launcher --param=script1~[;script2;script3...]~
       launcher --param=@file
       launcher -switch
-      launcher <variable>=value
+      launcher __variable__=value
     
 )'
     synopsis := '
@@ -79,8 +79,8 @@ PrintHelp(*) {
       launcher --remove=@list.ini
 
       @file can be quoted full path:
-        launcher --run=#@"C:\Temp files\My scripts"#
-        launcher --run=#"@C:\Temp files\My scripts"#
+        launcher --run=@"C:\Temp files\My scripts"
+        launcher --run="@C:\Temp files\My scripts"
 
         or path with variables:
         launcher list=C:\listfile.ini --add=@%list%
@@ -98,7 +98,7 @@ PrintHelp(*) {
       launcher --run=quickswitch -autoclose    launch quickswitch, then close all scripts
       launcher --add=@list.ini -autoclose      save multiple scripts and run them
     
-    Assigned <variable> will be saved:
+    Assigned __variable__ will be saved:
       launcher mainDir=C:\Scripts\DarkGui
       launcher --run=%mainDir%\DarkTheme.ahk
     
@@ -110,7 +110,7 @@ PrintHelp(*) {
       
       Variable can be removed:
         launcher AhkDir=
-        launcher AhkDir=<unset>
+        launcher AhkDir=__unset__
        
       You can use AutoHotkey built-in/saved/environment variables anywhere:
         launcher --run=%A_ScriptFullPath% --run=%A_ScriptDir%\quickswitch.ahk
@@ -126,18 +126,18 @@ PrintHelp(*) {
     msg := usage . synopsis . examples
 
     msg := 
-      msg.Color(Map(
-        '(@(file|list\.ini))',      'yellow',   ; list
-        '(mainDir|AhkDir)(?=\=)',   'purple',   ; variables names
-        '(%[^%]+%)',                'blue',     ; variables values
-        '(\-+[\-\w]+)',             'cyan',     ; switches
-        '~',                        'gray', 
-        '%',                        'blue',
-        '``',                       'green', 
-        '#',                        'yellow', 
-        '*',                        'crimson', 
-    )).Print()
-        ; '(?<!@)("[^"@]+")',         'green',    ; quotes
+      msg.Color([
+        '(@(file|list\.ini))',    'yellow',   ; list
+        '(mainDir|AhkDir)(?=\=)', 'purple',   ; variables names
+        '(%[^%]+%)',              'blue',     ; variables values
+        '(\-+[\-\w]+)(?=[ =])',   'cyan',     ; switches
+        '\*\*([^\*]+)\*\*',       'crimson',  
+        '__([^_]+)__',            'magenta',  
+        '~',                      'gray',
+        '``',                     'green', 
+        '#',                      'orange', 
+        '"',                      'green', 
+      ]).Print()
 }
 
 

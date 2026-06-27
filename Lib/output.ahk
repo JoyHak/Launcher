@@ -1,7 +1,7 @@
-Colorize(msg, mRegexColor := Map('"', 'green')) {
+Colorize(msg, aRegexColor := Map('"', 'green')) {
     ; Searches for text parts by regular expression and applies
     ; specified color (ANSI code).
-    ; `mRegexColor` is a `Map` with "regex-color" pairs
+    ; `aRegexColor` is an `Array` with "regex, color" pairs
     ; or `String` with single color name.
     ; Can create nested colored parts.
     ; https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
@@ -9,11 +9,12 @@ Colorize(msg, mRegexColor := Map('"', 'green')) {
     static colors := Map(
         'black',    30,
         'red',      31,
-        'yellow',   33,
+        'orange',   33,
+        'magenta',  35,
         'gray',     90,
         'crimson',  91,
         'green',    92,
-        'orange',   93,
+        'yellow',   93,
         'blue',     94,
         'purple',   95,
         'cyan',     96,
@@ -22,24 +23,37 @@ Colorize(msg, mRegexColor := Map('"', 'green')) {
     static esc := Chr(27)
     static end := esc '[0m'
     
-    if (mRegexColor is String) {
-        if (!mRegexColor || mRegexColor = 'white')
+    if (aRegexColor is String) {
+        if (!aRegexColor || aRegexColor = 'white')
             return msg
         
-        code  := colors.Get(mRegexColor, 37)  
+        code  := colors.Get(aRegexColor, 37)  
         begin := esc '[0;' code 'm'
         
         return begin . msg . end
     }
     
-    regex  := ''
-    chars  := ''
+    if (aRegexColor[1] ~= 'm)^\w+\)$') {
+        ; Options comes first
+        regex := aRegexColor.RemoveAt(1) . '(?|'
+    } else {
+        regex := '(?|'
+    }
+    
+    ; Convert input color names to ANSI codes
+    chars     := ''
     chrColors := Map()
+    chrColors.capacity := aRegexColor.capacity
     
-    index := 1
+    index     := 1
+    idxColor  := 1
     idxColors := Array()
+    idxColors.capacity := aRegexColor.capacity
     
-    for str, color in mRegexColor {
+    loop (aRegexColor.length / 2) {
+        str   := aRegexColor[index++]
+        color := aRegexColor[index++]
+
         if (str.length = 1) {
             ; Characters are combined into set []
             chars .= str
@@ -47,19 +61,23 @@ Colorize(msg, mRegexColor := Map('"', 'green')) {
         } else {
             ; Patterns are combined using the OR | operator.
             ; Index will be used to indentify pattern color
-            regex .= str '(*MARK:' index++ ')|' 
+            regex .= str '(*MARK:' idxColor++ ')|' 
             idxColors.Push(colors[color])
         }
     }
     
-    regex .= '(?<chr>[' chars '])(*MARK:chr)'
-    
+    if chars
+        regex .= '(?<chr>[' chars '])(*MARK:chr))'
+    else
+        regex := regex.RTrim('|') . ')'
+        
+    ; Parse the message
     pos := 1
     len := msg.length
     clrMsg := ''
     
     stack := []
-    stack.capacity := mRegexColor.capacity * 2
+    stack.capacity := aRegexColor.capacity * 2
     
     while (pos <= len) {
         if !msg.Match(regex, &match, pos) {
@@ -69,18 +87,16 @@ Colorize(msg, mRegexColor := Map('"', 'green')) {
         }
         
         ; Normal text before the match
-        text := msg.Slice(pos, match.pos - pos)
-        if (text)
-            clrMsg .= text
+        clrMsg .= msg.Slice(pos, match.pos - pos)
         
         if (match.mark != 'chr') {
             ; Atomic pattern that has no pair
             begin  := esc '[0;' idxColors[match.mark] 'm'
             clrMsg .= begin . match[1] . end
-            pos    := match.pos + 1
+            pos    := match.pos + match.len
             continue
         }
-        
+
         ; Single characters have a pair: " ", ` `, etc.
         if (stack.Has(-1) && stack[-1] = match.chr) {
             clrMsg .= end
@@ -91,7 +107,6 @@ Colorize(msg, mRegexColor := Map('"', 'green')) {
             stack.Push(match.chr)
         }
         
-        ; Move position forward
         pos := match.pos + 1
     }
     
@@ -133,7 +148,7 @@ Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', 'I
 Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', 'Iconx')
 
 Exception(ex, *) {
-    Err(ex.message '`n' ex.extra, ex.what)
+    Err(ex.message '`n' ex.extra, ex.what ' uncaught')
     ExitApp(12)
 }
 
