@@ -19,9 +19,9 @@ RunScripts(scriptsMap, *) {
     for script, state in scriptsMap {
         if (state = 'enabled') {
             Run(script)
-            Verbose('Run "' script '"')
+            Console('Launched "' script '"', 'green')
         } else {
-            Verbose('Cannot run disabled "' script '"')
+            Console('Cannot run disabled "' script '"', 'yellow')
         }
     }
 }
@@ -31,6 +31,8 @@ CloseScripts(scriptsMap, *) {
         return
 
     errors := ''
+    
+    ParseScripts:
     for script, state in scriptsMap {
         processQuery := 
         (Join`s
@@ -42,13 +44,13 @@ CloseScripts(scriptsMap, *) {
         for p in ComObjGet("winmgmts:").ExecQuery(processQuery) {
             if (p.commandLine.Find(script)) {
                 ProcessClose(p.processId)
-                Verbose('Close "' script '"')
-                continue
+                Console('Closed "' script '"', 'green')
+                continue ParseScripts
             }
         }
     
         if !RunWait('taskkill /fi "WINDOWTITLE eq ' script '*',, 'hide')
-            Verbose('Close "' script '"')
+            Console('Closed "' script '"', 'green')
         else
             errors .= script . A_Space
     }
@@ -61,7 +63,7 @@ CreateScriptsGroup() {
     static group := 'Scripts'
     
     for script in Scripts {
-        if script.ShortName(1).find('.exe', -1)
+        if script.ShortName(1).Find('.exe', -1)
             GroupAdd(group, 'ahk_exe ' script)
         else
             GroupAdd(group, script)    

@@ -153,6 +153,13 @@ Verbose(msg) {
     return false
 }
 
+Console(msg, color := 'white') {
+    if IsConsole
+        return Print(msg, color) 
+        
+    return false
+}
+
 Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', 'Icon!')
 
 Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', 'Iconx')
