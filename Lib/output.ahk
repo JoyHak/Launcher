@@ -1,116 +1,194 @@
-GetOutputHandle() {
-    static STD_INPUT_HANDLE   := -10
-    static STD_OUTPUT_HANDLE  := -11
-    static STD_ERROR_HANDLE   := -12
-
-    return DllCall('GetStdHandle', 'int', STD_OUTPUT_HANDLE)     
-}
-
-FreeOutput(*) {
-    if !(hConsole := DllCall('GetConsoleWindow'))
-        return false
+Colorize(msg, aRegexColor := ['"', 'green']) {
+    ; Searches for text parts by regular expression and applies
+    ; specified color (ANSI code).
+    ; `aRegexColor` is an `Array` with "regex, color" pairs
+    ; or `String` with single color name: "green", "yellow".
+    ; Can create nested colored parts.
+    ; https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
+    
+    static colors := Map(
+        'black',    30,
+        'red',      31,
+        'orange',   33,
+        'magenta',  35,
+        'gray',     90,
+        'crimson',  91,
+        'green',    92,
+        'yellow',   93,
+        'blue',     94,
+        'purple',   95,
+        'cyan',     96,
+    )
+    
+    static esc := Chr(27)
+    static end := esc '[0m'
+    
+    if (aRegexColor is String) {
+        if (!aRegexColor || aRegexColor = 'white')
+            return msg
         
-    ControlSend('{Enter}', , 'ahk_id ' hConsole)
+        code  := colors.Get(aRegexColor, 37)  
+        begin := esc '[0;' code 'm'
+        
+        return begin . msg . end
+    }
     
-    return DllCall('FreeConsole')
+    options := 'S)'   ; study the pattern
+    if (aRegexColor[1] ~= 'mS)^\w+\)$') {
+        ; Options comes first
+        options := options.RTrim(')') . aRegexColor.RemoveAt(1)
+    }
+    
+    ; Convert input color names to ANSI codes
+    regex     := ''
+    chars     := ''
+    chrColors := Map()
+    chrColors.capacity := aRegexColor.capacity
+    
+    index     := 1
+    idxColor  := 1
+    
+    loop (aRegexColor.length / 2) {
+        str   := aRegexColor[index++]
+        color := aRegexColor[index++]
+
+        if (str.length = 1) {
+            ; Characters are combined into set []
+            chars .= str
+            chrColors[str] := colors[color]
+        } else {
+            ; Patterns are combined using the OR | operator.
+            ; Index will be used to indentify pattern color
+            regex .= str '(*MARK:' idxColor ')|' 
+            chrColors[String(idxColor++)] := colors[color]
+        }
+    }
+    
+    if chars
+        regex .= '([' chars '])(*MARK:chr)'
+    else
+        regex := regex.RTrim('|')
+        
+    ; Branch reset allows to extract 1st capturing group 
+    ; from any found pattern, separated by the OR operator. 
+    ; I.e. it gives polymorphism. Regardless of capturing groups 
+    ; count match[1] always returns captured text.
+    regex := options '(?|' regex ')'
+        
+    ; Parse the message
+    pos := 1
+    len := msg.length
+    clrMsg := ''
+    
+    stack := []
+    stack.capacity := aRegexColor.capacity * 2
+
+    while (pos <= len) {
+        if !msg.Match(regex, &match, pos) {
+            ; Remaining text
+            clrMsg .= msg.Slice(pos)
+            break
+        }
+        
+        ; Normal text before the match
+        clrMsg .= msg.Slice(pos, match.pos - pos)
+        ; Move position forward
+        pos    := match.pos + match.len
+        
+        if (match.mark != 'chr') {
+            ; Atomic pattern that has no pair
+            begin  := esc '[0;' chrColors[match.mark] 'm'
+            if (stack.Has(-1)) {
+                _end := esc '[0;' chrColors[stack[-1]] 'm'
+                clrMsg .= begin . match[1] . _end
+            } else {
+                clrMsg .= begin . match[1] . end
+            }
+            continue
+        }
+
+        ; Characters that have a pair: " ", ` `, etc. (non-atomic)
+        ; Can consist of multiple characters if they were 
+        ; escaped with a slash: /** /**, /" /"
+        if (stack.Has(-1) && stack[-1] = match[1]) {
+            clrMsg .= end
+            stack.Pop()
+        } else {
+            begin  := esc '[0;' chrColors[match[1]] 'm'
+            clrMsg .= begin
+            stack.Push(match[1])
+        }
+    }
+    
+    return clrMsg
 }
 
-AttachOutput() {
-    DllCall('FreeConsole')
+DeColorize(str) {
+    ; Strips (removes) all ANSI codes
+    static esc := Chr(27)
+    return RegExReplace(str, 'U)' esc '\[\d+(;\d+)?m')
+}
+
+({}.DefineProp)(String.prototype, 'Color',  {call: Colorize})
+({}.DefineProp)(String.prototype, 'Strip',  {call: DeColorize})
+({}.DefineProp)(String.prototype, 'Print',  {call: Print})
+
+
+Print(msg, color := 'white', icon := '') {
+    msg .= '`n'
     
-    if !DllCall('AttachConsole', 'int', -1)
-        return false
-    
-    OnExit(FreeOutput)
-    OnError(Exception)
+    if IsConsole {
+        FileAppend(msg.Color(color), 'CONOUT$')
+    } else {
+        MsgBox(msg.Strip(), A_ScriptName, icon)
+    }
     
     return true
 }
 
-Output(text, color := 'white') {
-    static colors := Map(
-        'black',    0,
-        'blue',     1,
-        'green',    2,
-        'cyan',     3,
-        'red',      4,
-        'magenta',  5,
-        'yellow',   6,
-        'white',    7,
-        'gray',     8,
-    )
-    
-    normalColor := colors.Get(color, 7)
-    
-    Print(msg, _color := normalColor) {
-        static hConsole := GetOutputHandle()
-        DllCall(
-            'SetConsoleTextAttribute', 
-            'ptr', hConsole, 
-            'uint', _color
-        )
-        
-        FileAppend(msg, 'CONOUT$')
-    }
-
-    pos := 1
-    while (pos <= text.length) {
-        if (RegExMatch(text, 's)<(\w+)>(.*?)</\1>', &match, pos)) {
-            ; Print normal text before the match
-            normalText := text.Slice(pos, match.pos - pos)
-            if (normalText)
-                Print(normalText)
-            
-            ; Handle nested tags
-            Output(match[2], match[1])
-            
-            ; Move position forward
-            pos := match.pos + match.len
-        } else {
-            ; Print remaining text
-            Print(text.Slice(pos))
-            break
-        }
-    }
-}
-
-Message(msg, icon := '', normalColor := 'white') {
-    if IsConsole
-        return Output(msg '`n', normalColor)
-
-    msg := RegExReplace(msg, 's)<(\w+)>(.*?)</\1>', '$2')
-    return MsgBox(msg, A_ScriptName, icon)
-}
-
 Verbose(msg) {
     if IsVerbose
-        Message(Format('<gray>{}</gray>', msg))
+        return Print(msg, 'gray')
+        
+    return false
 }
 
-Warning(msg, what := A_ScriptName) {
-    Message(
-        Format('<yellow>{} warning - {}</yellow>', what, msg), 
-        'Icon!'
-    )
-}
+Warning(msg, what := A_ScriptName) => Print(what ' warning - ' msg, 'yellow', 'Icon!')
 
-Err(msg, what := A_ScriptName) {
-    Message(
-        Format('<red>{} error - {}</red>', what, msg), 
-        'Iconx'
-    )
-}
+Err(msg, what := A_ScriptName) => Print(what ' error - ' msg, 'red', 'Iconx')
 
 Exception(ex, *) {
-    Err(ex.message '`n' ex.extra, ex.what)
+    Err(ex.message '`n' ex.extra, ex.what ' uncaught')
     ExitApp(12)
 }
 
 
-Colorize(str, regex, colorTag) {
-    return RegExReplace(
-        str, 
-        regex,
-        Format('<{1}>$0</{1}>', colorTag)
-    )
+FreeOutput(*) {
+    if (hConsole := DllCall('GetConsoleWindow'))
+        ControlSend('{Enter}', , 'ahk_id ' hConsole)
+        
+    return DllCall('FreeConsole')
+}
+
+AttachConsole() {
+    if !DllCall("AttachConsole", "int", -1)
+        return false
+    
+    static STD_INPUT_HANDLE   := -10
+    static STD_OUTPUT_HANDLE  := -11
+    static STD_ERROR_HANDLE   := -12
+    
+    if !(hConsole := DllCall("GetStdHandle", "int", STD_OUTPUT_HANDLE))
+        return false
+    
+    ; Enable ANSI codes processing
+    if DllCall("GetConsoleMode", "Ptr", hConsole, "UIntP", &mode := 0) {
+        mode |= 0x0004  ; ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        DllCall("SetConsoleMode", "Ptr", hConsole, "UInt", mode)
+    }
+
+    OnExit(FreeOutput)
+    OnError(Exception)
+    
+    return hConsole
 }

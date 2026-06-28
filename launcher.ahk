@@ -6,24 +6,23 @@
 ;@Ahk2Exe-SetDescription https://github.com/JoyHak/Launcher
 ;@Ahk2Exe-SetLegalTrademarks MIT license
 
-ShowHelpMessage(*) {
-    usage := 
-    (
-    "<gray>Launch saved scripts and applications.
+PrintHelp(*) {
+    usage := '
+    (`
+    ~Launch saved scripts and applications.
     Copyright (c) 2026 Rafaello
-    https://github.com/JoyHak/Launcher</gray>
+    https://github.com/JoyHak/Launcher~
     
-    Usage:
-      launcher --param=script1<gray>[;script2;script3...]</gray>
-      launcher --param=<yellow>@file</yellow>
+    #Usage:#
+      launcher --param=script1~[;script2;script3...]~
+      launcher --param=@file
       launcher -switch
-      launcher <cyan>variable</cyan>=value
+      launcher __variable__=value
     
-"
-)
-    synopsis := 
-    (
-    "Parameters:
+)'
+    synopsis := '
+    (`
+    #Parameters:#
       --add      add script(s)
       --enable   enable script(s) or
                  add script(s) and enable
@@ -37,7 +36,7 @@ ShowHelpMessage(*) {
       
       --sep      set separator between scripts
 
-    Switches:
+    #Switches:#
       -autorun         run all enabled scripts
       -autoclose       close all running scripts
       
@@ -47,60 +46,59 @@ ShowHelpMessage(*) {
       -scripts-clear   clear saved scripts
       
       -save            write all data to the drive.
-                       <gray>Typically data is written to disk after all params
-                       parameters have been processed to reduce disk usage.</gray>
+                       ~Typically data is written to disk after all params
+                       parameters have been processed to reduce disk usage.~
                    
       -restore         restore all data from the drive.
-                       <gray>If -save was passed, restores previous version. 
-                       Otherwise updates the data in memory from disk.</gray>
+                       ~If -save was passed, restores previous version. 
+                       Otherwise updates the data in memory from disk.~
       
       -verbose         show additional messages
       -help, -h, -?    show this help message
       
-    Pass one or more scripts, separated by <green>;</green>
-      launcher --run=quickswitch<green>;</green>radify
+    Pass one or more scripts, separated by `;`
+      launcher --run=quickswitch`;`radify
 
     Separator can be changed:
-      launcher --sep=<green>^</green> --run=quickswitch<green>^</green>radify
-      launcher --run=arrows<green>^</green>chars  separator is saved
+      launcher --sep=`^` --run=quickswitch`^`radify
+      launcher --run=arrows`^`chars  separator is saved
       
-      Special batch/powershell symbols can be escaped via quotes:
-      launcher --sep=<green>`'|`'</green>
-      launcher --sep=<green>`"|`"</green>
+      Special batch/powershell symbols can be escaped via `quotes`:
+      launcher --sep='|'
+      launcher --sep=`"|"`
 
     You can specify full path or filename only:
       launcher --run=quickswitch
       launcher --run=C:\Ahk\quickswitch
       
-"
-)
-    examples := 
-    (
-    "Multiple scripts can be read from @file:
+)'
+    examples := '
+    (`
+    Multiple scripts can be read from @file:
       launcher --add=@list.ini
       launcher --remove=@list.ini
 
-      @file can be quoted full path:
-        launcher --run=<yellow>@'C:\Temp files\My scripts'</yellow>
-        launcher --run=<yellow>'@C:\Temp files\My scripts'</yellow>
+      @file can be `quoted` full path:
+        launcher --run=`@"C:\Temp files\My scripts"`
+        launcher --run=`"@C:\Temp files\My scripts"`
 
         or path with variables:
-        launcher list=C:\listfile.ini --add=@%list%
+        launcher list=C:\listfile.ini --add=#@#%list%
 
       @file may contain scripts, variables and
-      strings, separated by <cyan>--sep</cyan>:
-        C:\s1.ahk<green>;</green>C:\s2.ahk
+      strings, separated by --sep:
+        C:\s1.ahk`;`C:\s2.ahk
         C:\%A_Temp%\s3.ahk
         C:\%myvar%\s4.ahk
 
       It can be passed to any parameter.
     
-    <cyan>Parameters|switches</cyan> order affects events sequence:
-      launcher <cyan>-autoclose</cyan> <green>--run</green>=quickswitch    close all scripts, then launch quickswitch
-      launcher <green>--run</green>=quickswitch <cyan>-autoclose</cyan>    launch quickswitch, then close all scripts
-      launcher <green>--add</green>=@list.ini <cyan>-autoclose</cyan>      save multiple scripts and run them
+    #Parameters|switches# order affects events sequence:
+      launcher -autoclose --run=quickswitch    close all scripts, then launch quickswitch
+      launcher --run=quickswitch -autoclose    launch quickswitch, then close all scripts
+      launcher --add=@list.ini -autoclose      save multiple scripts and run them
     
-    Assigned <cyan>variable</cyan> will be saved:
+    Assigned __variable__ will be saved:
       launcher mainDir=C:\Scripts\DarkGui
       launcher --run=%mainDir%\DarkTheme.ahk
     
@@ -108,11 +106,11 @@ ShowHelpMessage(*) {
       launcher mainDir=%A_ScriptDir%\DarkGui
     
       Value can be changed on the fly:
-        launcher AhkDir=C:\Ahk <green>--run</green>=%AhkDir%\quickswitch AhkDir=C:\Scripts <green>--run</green>=%AhkDir%\radify
+        launcher AhkDir=C:\Ahk --run=%AhkDir%\quickswitch AhkDir=C:\Scripts --run=%AhkDir%\radify
       
       Variable can be removed:
         launcher AhkDir=
-        launcher AhkDir=<magenta>unset</magenta>
+        launcher AhkDir=__unset__
        
       You can use AutoHotkey built-in/saved/environment variables anywhere:
         launcher --run=%A_ScriptFullPath% --run=%A_ScriptDir%\quickswitch.ahk
@@ -121,20 +119,24 @@ ShowHelpMessage(*) {
         
       ...and include them to @file:
         C:\%A_Temp%\script.ahk     line from @list.ini
-        launcher --add=@list.ini   will add 'C:\%A_Temp%\script.ahk'
+        launcher --add=@list.ini   will add `"C:\%A_Temp%\script.ahk"`
 
-"
-)
-
-    synopsis := synopsis
-      .Color('[\-]+[\-\w]+', 'cyan')
-      
-    examples := examples
-      .Color('(mainDir|AhkDir)(?=\=)', 'cyan')
-      .Color('%[^%]+%',                'blue')
-      .Color('@(file|list\.ini)',      'yellow')
+)'
     
-    Message(usage . synopsis . examples)
+    msg := usage . synopsis . examples
+
+    msg := 
+      msg.Color([
+        '(@(file|list\.ini))',    'yellow',   ; list
+        '(mainDir|AhkDir)(?=\=)', 'purple',   ; variables names
+        '(%[^%]+%)',              'blue',     ; variables values
+        '(\-+[\-\w]+)(?=[ =])',   'cyan',     ; switches
+        '\*\*([^\*]+)\*\*',       'crimson',  
+        '__([^_]+)__',            'magenta',  
+        '~',                      'gray',
+        '``',                     'green', 
+        '#',                      'orange'
+      ]).Print()
 }
 
 

@@ -88,7 +88,7 @@ class ScriptManager {
         ui.Button(,    '&Refresh',   r(this.scripts.btns, 'refresh'), f('Refresh'))
         ui.Button(,    '&Save', ,    WriteAll)
         ui.Button(,    'Res&tore',,  (*) => (RestoreAll(), this.Refresh()))
-        ui.Button('w30',     '&?',,  ShowHelpMessage)
+        ui.Button('w30',     '&?',,  PrintHelp)
         
         this.status := ui.AddText(new ' w760')
         
@@ -342,9 +342,8 @@ class ScriptManager {
         
         path := ExpandVariables(path)
 
-        if (path.Slice(1, 1) = '@') {
-            path := path.Slice(2)  ; omit @
-            _scripts := ParseFile(path, Vars['scriptsSep'])
+        if (path[1] = '@') {
+            _scripts := ParseFile(path.LTrim('@'), Vars['scriptsSep'])
         } else {
             _scripts := ParseScripts(path, Vars['scriptsSep'])
         }

@@ -9,6 +9,8 @@ GetShortName(path, offset := 2) {
     return path
 }
 
+({}.DefineProp)(String.prototype, 'ShortName', {call: GetShortName})
+
 RunScripts(scriptsMap, *) {
     if !scriptsMap.count
         return

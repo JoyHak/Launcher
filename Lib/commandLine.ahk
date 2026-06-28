@@ -43,8 +43,8 @@ ParseFile(path, separator := ';', state := 'enabled') {
 }
 
 ParseCommandLine() {
-    global IsConsole := AttachOutput()
-
+    global IsConsole := AttachConsole()
+    
     ParseArgs:
     for args in A_Args {
         pair := args.Split('=')
@@ -61,9 +61,8 @@ ParseCommandLine() {
         GetScripts(state := 'enabled') {
             path := ExpandVariables(GetValue())
 
-            if (path.Slice(1, 1) = '@') {
-                path := path.Slice(2)  ; omit @
-                return ParseFile(path, Vars['scriptsSep'], state)
+            if (path[1] = '@') {
+                return ParseFile(path.LTrim('@'), Vars['scriptsSep'], state)
             } else {
                 return ParseScripts(path, Vars['scriptsSep'], state)
             }
@@ -75,11 +74,13 @@ ParseCommandLine() {
         case '-autoclose':
             CloseScripts(Scripts)
         case '-vars':
-            grid := Vars
+            Vars
               .ToGrid(['Name', 'Value'])
-              .Color('m)^\s+Name| Value\s*$', 'gray')
-
-            Message(grid)
+              .Color([
+                'm)', 
+                '(^\s+Name| Value\s*$)', 'gray'
+              ])
+              .Print()
             
         case '-scripts':
             _scripts := Map()
@@ -94,7 +95,7 @@ ParseCommandLine() {
                 case 'enabled':
                     icon  := 'o'
                 case 'running':
-                    icon := '>'
+                    icon  := '>'
                 case 'unset':
                     continue
                 }
@@ -102,16 +103,18 @@ ParseCommandLine() {
                 _scripts.Set(icon ' ' script, state)
             }
             
-            ; Color tags will break grid alignment, 
-            ; so they are added after all calculations
-            grid := _scripts
+            ; Color codes will break grid alignment, 
+            ; so they are added after all ToGrid() calculations
+            _scripts
               .ToGrid(['  Path', 'State'])
-              .Color('m)^x\s+| disabled\s*$', 'red')
-              .Color('m)^o\s+| enabled\s*$',  'cyan')
-              .Color('m)^>\s+| running\s*$',  'green')
-              .Color('m)^\s+Path| State\s*$', 'gray')
-            
-            Message(grid)
+              .Color([
+                'm)',
+                '(^x\s+| disabled\s*$)', 'red',
+                '(^o\s+| enabled\s*$)',  'cyan',
+                '(^>\s+| running\s*$)',  'green',
+                '(^\s+Path| State\s*$)', 'gray'
+              ])
+              .Print()
             
         case '-vars-clear':
             Vars.Clean('variables')
@@ -127,7 +130,7 @@ ParseCommandLine() {
             RestoreAll()
             
         case '-help', '-h', '-?':
-            ShowHelpMessage()    
+            PrintHelp()    
         case '--sep':
             Vars['scriptsSep'] := GetValue() 
             Verbose('Set separator: ' GetValue())
