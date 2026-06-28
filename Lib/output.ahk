@@ -172,7 +172,7 @@ Exception(ex, *) {
 
 FreeOutput(*) {
     if (hConsole := DllCall('GetConsoleWindow'))
-        ControlSend('{Enter}', , 'ahk_id ' hConsole)
+        try ControlSend('{Enter}', , 'ahk_id ' hConsole)
         
     return DllCall('FreeConsole')
 }
