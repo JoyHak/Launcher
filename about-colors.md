@@ -46,4 +46,4 @@ str.Color([
 ])
 ```
 
-You can read how and why it was created here: <*under construction*>
+[You can read how and why it was created here.](https://habr.com/ru/articles/1053052/)
