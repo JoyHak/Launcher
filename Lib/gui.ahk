@@ -121,7 +121,8 @@ class ScriptManager {
         this.vars.btns.remove.enabled := false
     }
 
-    RefreshScripts(*) {
+    ; Redraws the scripts list without touching the path typed by the user
+    RedrawScripts(*) {
         Critical(-1)
         this.scripts.Delete()
                 
@@ -153,7 +154,6 @@ class ScriptManager {
         }
 
         this.scripts.ModifyCol()  ; Auto-size each column
-        this.scripts.edit.value := ''
         this.status.text := 'Loaded ' Scripts.Count ' scripts'
         
         ; Reset buttons colors
@@ -167,6 +167,11 @@ class ScriptManager {
         this.scripts.btns.add.text       := 'Add'
         
         this.scripts.lastUpdated         := A_TickCount
+    }
+
+    RefreshScripts(*) {
+        this.RedrawScripts()
+        this.scripts.edit.value := ''
     }
     
     Refresh(*) {
@@ -395,7 +400,7 @@ class ScriptManager {
         if (A_TickCount - this.scripts.lastUpdated < timeoutMs)
             return false
         
-        SetTimer(this._Fn('RefreshScripts'), -timeoutMs)
+        SetTimer(this._Fn('RedrawScripts'), -timeoutMs)
         return true
     }
 
